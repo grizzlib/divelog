@@ -21,9 +21,26 @@ class _DiveListScreenState extends State<DiveListScreen> {
   Future<void> loadDives() async {
     final results = await db.getAllDives();
 
+    // optional: newest first
+    results.sort((a, b) => b.date.compareTo(a.date));
+
     setState(() {
       dives = results;
     });
+  }
+
+  Future<void> _openDive(Dive dive) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DiveDetailScreen(dive: dive),
+      ),
+    );
+
+    // refresh list if something changed (edit/delete)
+    if (result == true) {
+      await loadDives();
+    }
   }
 
   @override
@@ -51,16 +68,7 @@ class _DiveListScreenState extends State<DiveListScreen> {
                   trailing: Text(
                     '${dive.date.month}/${dive.date.day}/${dive.date.year}',
                   ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => DiveDetailScreen(
-                          dive: dive,
-                        ),
-                      ),
-                    );
-                  },
+                  onTap: () => _openDive(dive),
                 );
               },
             ),

@@ -3,11 +3,12 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
 
 part 'app_database.g.dart';
 
 class Dives extends Table {
-  TextColumn get id => text()();
+  TextColumn get id => text().clientDefault(() => const Uuid().v4())();
   DateTimeColumn get date => dateTime()();
 
   TextColumn get locationName => text().nullable()();
@@ -31,21 +32,23 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;
 
- // Future<int> insertDive(DivesCompanion entry) {
- //   return into(dives).insert(entry);
- // }
   Future<int> insertDive(DivesCompanion entry) async {
-  final result = await into(dives).insert(entry);
-  print("🔥 INSERT SUCCESS: $result");
-  return result;
-}
-
-   Future<List<Dive>> getAllDives() {
-     return select(dives).get();
+    final result = await into(dives).insert(entry);
+    print("🔥 INSERT SUCCESS: $result");
+    return result;
   }
-  Future<bool> updateDive(Dive dive) {
-  return update(dives).replace(dive);
-}
+
+  Future<List<Dive>> getAllDives() {
+    return select(dives).get();
+  }
+
+  Future<bool> updateDive(DivesCompanion entry) {
+    return update(dives).replace(entry);
+  }
+
+  Future<int> deleteDive(String id) {
+    return (delete(dives)..where((t) => t.id.equals(id))).go();
+  }
 }
 
 LazyDatabase _openConnection() {
@@ -55,4 +58,5 @@ LazyDatabase _openConnection() {
     return NativeDatabase(file);
   });
 }
+
 final AppDatabase db = AppDatabase();
