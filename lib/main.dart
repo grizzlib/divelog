@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/add_dive_screen.dart';
+import 'screens/dive_list_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,18 +24,39 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Dive Log")),
+      appBar: AppBar(
+        title: const Text("Dive Log"),
+      ),
       body: Center(
-        child: ElevatedButton(
-          child: const Text("Add Dive"),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const AddDiveScreen(),
-              ),
-            );
-          },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              child: const Text("Add Dive"),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AddDiveScreen(),
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            ElevatedButton(
+              child: const Text("View Dives"),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const DiveListScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );

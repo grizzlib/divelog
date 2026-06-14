@@ -43,6 +43,9 @@ class AppDatabase extends _$AppDatabase {
    Future<List<Dive>> getAllDives() {
      return select(dives).get();
   }
+  Future<bool> updateDive(Dive dive) {
+  return update(dives).replace(dive);
+}
 }
 
 LazyDatabase _openConnection() {
