@@ -9,6 +9,7 @@ part 'app_database.g.dart';
 
 class Dives extends Table {
   TextColumn get id => text().clientDefault(() => const Uuid().v4())();
+
   DateTimeColumn get date => dateTime()();
 
   TextColumn get locationName => text().nullable()();
@@ -21,6 +22,26 @@ class Dives extends Table {
 
   TextColumn get notes => text().nullable()();
 
+  // =========================
+  // Phase 1 - V2 Schema
+  // =========================
+
+  IntColumn get diveNumber => integer().nullable()();
+
+  TextColumn get timeIn => text().nullable()();
+  TextColumn get timeOut => text().nullable()();
+
+  TextColumn get tankType => text().nullable()();
+
+  // numeric real values (important for future SAC/RMV calculations)
+  RealColumn get tankSize => real().nullable()();
+
+  TextColumn get gasMix => text().nullable()();
+
+  RealColumn get weightUsed => real().nullable()();
+
+  TextColumn get activityType => text().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -30,25 +51,34 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
-  Future<int> insertDive(DivesCompanion entry) async {
-    final result = await into(dives).insert(entry);
-    print("🔥 INSERT SUCCESS: $result");
-    return result;
-  }
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) async => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(dives, dives.diveNumber);
+            await m.addColumn(dives, dives.timeIn);
+            await m.addColumn(dives, dives.timeOut);
+            await m.addColumn(dives, dives.tankType);
+            await m.addColumn(dives, dives.tankSize);
+            await m.addColumn(dives, dives.gasMix);
+            await m.addColumn(dives, dives.weightUsed);
+            await m.addColumn(dives, dives.activityType);
+          }
+        },
+      );
 
-  Future<List<Dive>> getAllDives() {
-    return select(dives).get();
-  }
+  Future<int> insertDive(DivesCompanion entry) => into(dives).insert(entry);
 
-  Future<bool> updateDive(DivesCompanion entry) {
-    return update(dives).replace(entry);
-  }
+  Future<List<Dive>> getAllDives() => select(dives).get();
 
-  Future<int> deleteDive(String id) {
-    return (delete(dives)..where((t) => t.id.equals(id))).go();
-  }
+  Future<bool> updateDive(DivesCompanion entry) =>
+      update(dives).replace(entry);
+
+  Future<int> deleteDive(String id) =>
+      (delete(dives)..where((t) => t.id.equals(id))).go();
 }
 
 LazyDatabase _openConnection() {

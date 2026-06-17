@@ -21,9 +21,10 @@ class _DiveListScreenState extends State<DiveListScreen> {
   Future<void> loadDives() async {
     final results = await db.getAllDives();
 
-    // optional: newest first
+    // newest first
     results.sort((a, b) => b.date.compareTo(a.date));
 
+    if (!mounted) return;
     setState(() {
       dives = results;
     });

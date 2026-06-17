@@ -15,7 +15,8 @@ class $DivesTable extends Dives with TableInfo<$DivesTable, Dive> {
     aliasedName,
     false,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
+    clientDefault: () => const Uuid().v4(),
   );
   static const VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
@@ -90,6 +91,90 @@ class $DivesTable extends Dives with TableInfo<$DivesTable, Dive> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _diveNumberMeta = const VerificationMeta(
+    'diveNumber',
+  );
+  @override
+  late final GeneratedColumn<int> diveNumber = GeneratedColumn<int>(
+    'dive_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _timeInMeta = const VerificationMeta('timeIn');
+  @override
+  late final GeneratedColumn<String> timeIn = GeneratedColumn<String>(
+    'time_in',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _timeOutMeta = const VerificationMeta(
+    'timeOut',
+  );
+  @override
+  late final GeneratedColumn<String> timeOut = GeneratedColumn<String>(
+    'time_out',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tankTypeMeta = const VerificationMeta(
+    'tankType',
+  );
+  @override
+  late final GeneratedColumn<String> tankType = GeneratedColumn<String>(
+    'tank_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tankSizeMeta = const VerificationMeta(
+    'tankSize',
+  );
+  @override
+  late final GeneratedColumn<double> tankSize = GeneratedColumn<double>(
+    'tank_size',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _gasMixMeta = const VerificationMeta('gasMix');
+  @override
+  late final GeneratedColumn<String> gasMix = GeneratedColumn<String>(
+    'gas_mix',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _weightUsedMeta = const VerificationMeta(
+    'weightUsed',
+  );
+  @override
+  late final GeneratedColumn<double> weightUsed = GeneratedColumn<double>(
+    'weight_used',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _activityTypeMeta = const VerificationMeta(
+    'activityType',
+  );
+  @override
+  late final GeneratedColumn<String> activityType = GeneratedColumn<String>(
+    'activity_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -100,6 +185,14 @@ class $DivesTable extends Dives with TableInfo<$DivesTable, Dive> {
     startPressurePsi,
     endPressurePsi,
     notes,
+    diveNumber,
+    timeIn,
+    timeOut,
+    tankType,
+    tankSize,
+    gasMix,
+    weightUsed,
+    activityType,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -115,8 +208,6 @@ class $DivesTable extends Dives with TableInfo<$DivesTable, Dive> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('date')) {
       context.handle(
@@ -181,6 +272,57 @@ class $DivesTable extends Dives with TableInfo<$DivesTable, Dive> {
         notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
       );
     }
+    if (data.containsKey('dive_number')) {
+      context.handle(
+        _diveNumberMeta,
+        diveNumber.isAcceptableOrUnknown(data['dive_number']!, _diveNumberMeta),
+      );
+    }
+    if (data.containsKey('time_in')) {
+      context.handle(
+        _timeInMeta,
+        timeIn.isAcceptableOrUnknown(data['time_in']!, _timeInMeta),
+      );
+    }
+    if (data.containsKey('time_out')) {
+      context.handle(
+        _timeOutMeta,
+        timeOut.isAcceptableOrUnknown(data['time_out']!, _timeOutMeta),
+      );
+    }
+    if (data.containsKey('tank_type')) {
+      context.handle(
+        _tankTypeMeta,
+        tankType.isAcceptableOrUnknown(data['tank_type']!, _tankTypeMeta),
+      );
+    }
+    if (data.containsKey('tank_size')) {
+      context.handle(
+        _tankSizeMeta,
+        tankSize.isAcceptableOrUnknown(data['tank_size']!, _tankSizeMeta),
+      );
+    }
+    if (data.containsKey('gas_mix')) {
+      context.handle(
+        _gasMixMeta,
+        gasMix.isAcceptableOrUnknown(data['gas_mix']!, _gasMixMeta),
+      );
+    }
+    if (data.containsKey('weight_used')) {
+      context.handle(
+        _weightUsedMeta,
+        weightUsed.isAcceptableOrUnknown(data['weight_used']!, _weightUsedMeta),
+      );
+    }
+    if (data.containsKey('activity_type')) {
+      context.handle(
+        _activityTypeMeta,
+        activityType.isAcceptableOrUnknown(
+          data['activity_type']!,
+          _activityTypeMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -222,6 +364,38 @@ class $DivesTable extends Dives with TableInfo<$DivesTable, Dive> {
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
       ),
+      diveNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}dive_number'],
+      ),
+      timeIn: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}time_in'],
+      ),
+      timeOut: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}time_out'],
+      ),
+      tankType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tank_type'],
+      ),
+      tankSize: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}tank_size'],
+      ),
+      gasMix: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}gas_mix'],
+      ),
+      weightUsed: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}weight_used'],
+      ),
+      activityType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}activity_type'],
+      ),
     );
   }
 
@@ -240,6 +414,14 @@ class Dive extends DataClass implements Insertable<Dive> {
   final int? startPressurePsi;
   final int? endPressurePsi;
   final String? notes;
+  final int? diveNumber;
+  final String? timeIn;
+  final String? timeOut;
+  final String? tankType;
+  final double? tankSize;
+  final String? gasMix;
+  final double? weightUsed;
+  final String? activityType;
   const Dive({
     required this.id,
     required this.date,
@@ -249,6 +431,14 @@ class Dive extends DataClass implements Insertable<Dive> {
     this.startPressurePsi,
     this.endPressurePsi,
     this.notes,
+    this.diveNumber,
+    this.timeIn,
+    this.timeOut,
+    this.tankType,
+    this.tankSize,
+    this.gasMix,
+    this.weightUsed,
+    this.activityType,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -268,6 +458,30 @@ class Dive extends DataClass implements Insertable<Dive> {
     }
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
+    }
+    if (!nullToAbsent || diveNumber != null) {
+      map['dive_number'] = Variable<int>(diveNumber);
+    }
+    if (!nullToAbsent || timeIn != null) {
+      map['time_in'] = Variable<String>(timeIn);
+    }
+    if (!nullToAbsent || timeOut != null) {
+      map['time_out'] = Variable<String>(timeOut);
+    }
+    if (!nullToAbsent || tankType != null) {
+      map['tank_type'] = Variable<String>(tankType);
+    }
+    if (!nullToAbsent || tankSize != null) {
+      map['tank_size'] = Variable<double>(tankSize);
+    }
+    if (!nullToAbsent || gasMix != null) {
+      map['gas_mix'] = Variable<String>(gasMix);
+    }
+    if (!nullToAbsent || weightUsed != null) {
+      map['weight_used'] = Variable<double>(weightUsed);
+    }
+    if (!nullToAbsent || activityType != null) {
+      map['activity_type'] = Variable<String>(activityType);
     }
     return map;
   }
@@ -290,6 +504,30 @@ class Dive extends DataClass implements Insertable<Dive> {
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
+      diveNumber: diveNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(diveNumber),
+      timeIn: timeIn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(timeIn),
+      timeOut: timeOut == null && nullToAbsent
+          ? const Value.absent()
+          : Value(timeOut),
+      tankType: tankType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tankType),
+      tankSize: tankSize == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tankSize),
+      gasMix: gasMix == null && nullToAbsent
+          ? const Value.absent()
+          : Value(gasMix),
+      weightUsed: weightUsed == null && nullToAbsent
+          ? const Value.absent()
+          : Value(weightUsed),
+      activityType: activityType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(activityType),
     );
   }
 
@@ -307,6 +545,14 @@ class Dive extends DataClass implements Insertable<Dive> {
       startPressurePsi: serializer.fromJson<int?>(json['startPressurePsi']),
       endPressurePsi: serializer.fromJson<int?>(json['endPressurePsi']),
       notes: serializer.fromJson<String?>(json['notes']),
+      diveNumber: serializer.fromJson<int?>(json['diveNumber']),
+      timeIn: serializer.fromJson<String?>(json['timeIn']),
+      timeOut: serializer.fromJson<String?>(json['timeOut']),
+      tankType: serializer.fromJson<String?>(json['tankType']),
+      tankSize: serializer.fromJson<double?>(json['tankSize']),
+      gasMix: serializer.fromJson<String?>(json['gasMix']),
+      weightUsed: serializer.fromJson<double?>(json['weightUsed']),
+      activityType: serializer.fromJson<String?>(json['activityType']),
     );
   }
   @override
@@ -321,6 +567,14 @@ class Dive extends DataClass implements Insertable<Dive> {
       'startPressurePsi': serializer.toJson<int?>(startPressurePsi),
       'endPressurePsi': serializer.toJson<int?>(endPressurePsi),
       'notes': serializer.toJson<String?>(notes),
+      'diveNumber': serializer.toJson<int?>(diveNumber),
+      'timeIn': serializer.toJson<String?>(timeIn),
+      'timeOut': serializer.toJson<String?>(timeOut),
+      'tankType': serializer.toJson<String?>(tankType),
+      'tankSize': serializer.toJson<double?>(tankSize),
+      'gasMix': serializer.toJson<String?>(gasMix),
+      'weightUsed': serializer.toJson<double?>(weightUsed),
+      'activityType': serializer.toJson<String?>(activityType),
     };
   }
 
@@ -333,6 +587,14 @@ class Dive extends DataClass implements Insertable<Dive> {
     Value<int?> startPressurePsi = const Value.absent(),
     Value<int?> endPressurePsi = const Value.absent(),
     Value<String?> notes = const Value.absent(),
+    Value<int?> diveNumber = const Value.absent(),
+    Value<String?> timeIn = const Value.absent(),
+    Value<String?> timeOut = const Value.absent(),
+    Value<String?> tankType = const Value.absent(),
+    Value<double?> tankSize = const Value.absent(),
+    Value<String?> gasMix = const Value.absent(),
+    Value<double?> weightUsed = const Value.absent(),
+    Value<String?> activityType = const Value.absent(),
   }) => Dive(
     id: id ?? this.id,
     date: date ?? this.date,
@@ -346,6 +608,14 @@ class Dive extends DataClass implements Insertable<Dive> {
         ? endPressurePsi.value
         : this.endPressurePsi,
     notes: notes.present ? notes.value : this.notes,
+    diveNumber: diveNumber.present ? diveNumber.value : this.diveNumber,
+    timeIn: timeIn.present ? timeIn.value : this.timeIn,
+    timeOut: timeOut.present ? timeOut.value : this.timeOut,
+    tankType: tankType.present ? tankType.value : this.tankType,
+    tankSize: tankSize.present ? tankSize.value : this.tankSize,
+    gasMix: gasMix.present ? gasMix.value : this.gasMix,
+    weightUsed: weightUsed.present ? weightUsed.value : this.weightUsed,
+    activityType: activityType.present ? activityType.value : this.activityType,
   );
   Dive copyWithCompanion(DivesCompanion data) {
     return Dive(
@@ -367,6 +637,20 @@ class Dive extends DataClass implements Insertable<Dive> {
           ? data.endPressurePsi.value
           : this.endPressurePsi,
       notes: data.notes.present ? data.notes.value : this.notes,
+      diveNumber: data.diveNumber.present
+          ? data.diveNumber.value
+          : this.diveNumber,
+      timeIn: data.timeIn.present ? data.timeIn.value : this.timeIn,
+      timeOut: data.timeOut.present ? data.timeOut.value : this.timeOut,
+      tankType: data.tankType.present ? data.tankType.value : this.tankType,
+      tankSize: data.tankSize.present ? data.tankSize.value : this.tankSize,
+      gasMix: data.gasMix.present ? data.gasMix.value : this.gasMix,
+      weightUsed: data.weightUsed.present
+          ? data.weightUsed.value
+          : this.weightUsed,
+      activityType: data.activityType.present
+          ? data.activityType.value
+          : this.activityType,
     );
   }
 
@@ -380,7 +664,15 @@ class Dive extends DataClass implements Insertable<Dive> {
           ..write('bottomTimeMin: $bottomTimeMin, ')
           ..write('startPressurePsi: $startPressurePsi, ')
           ..write('endPressurePsi: $endPressurePsi, ')
-          ..write('notes: $notes')
+          ..write('notes: $notes, ')
+          ..write('diveNumber: $diveNumber, ')
+          ..write('timeIn: $timeIn, ')
+          ..write('timeOut: $timeOut, ')
+          ..write('tankType: $tankType, ')
+          ..write('tankSize: $tankSize, ')
+          ..write('gasMix: $gasMix, ')
+          ..write('weightUsed: $weightUsed, ')
+          ..write('activityType: $activityType')
           ..write(')'))
         .toString();
   }
@@ -395,6 +687,14 @@ class Dive extends DataClass implements Insertable<Dive> {
     startPressurePsi,
     endPressurePsi,
     notes,
+    diveNumber,
+    timeIn,
+    timeOut,
+    tankType,
+    tankSize,
+    gasMix,
+    weightUsed,
+    activityType,
   );
   @override
   bool operator ==(Object other) =>
@@ -407,7 +707,15 @@ class Dive extends DataClass implements Insertable<Dive> {
           other.bottomTimeMin == this.bottomTimeMin &&
           other.startPressurePsi == this.startPressurePsi &&
           other.endPressurePsi == this.endPressurePsi &&
-          other.notes == this.notes);
+          other.notes == this.notes &&
+          other.diveNumber == this.diveNumber &&
+          other.timeIn == this.timeIn &&
+          other.timeOut == this.timeOut &&
+          other.tankType == this.tankType &&
+          other.tankSize == this.tankSize &&
+          other.gasMix == this.gasMix &&
+          other.weightUsed == this.weightUsed &&
+          other.activityType == this.activityType);
 }
 
 class DivesCompanion extends UpdateCompanion<Dive> {
@@ -419,6 +727,14 @@ class DivesCompanion extends UpdateCompanion<Dive> {
   final Value<int?> startPressurePsi;
   final Value<int?> endPressurePsi;
   final Value<String?> notes;
+  final Value<int?> diveNumber;
+  final Value<String?> timeIn;
+  final Value<String?> timeOut;
+  final Value<String?> tankType;
+  final Value<double?> tankSize;
+  final Value<String?> gasMix;
+  final Value<double?> weightUsed;
+  final Value<String?> activityType;
   final Value<int> rowid;
   const DivesCompanion({
     this.id = const Value.absent(),
@@ -429,10 +745,18 @@ class DivesCompanion extends UpdateCompanion<Dive> {
     this.startPressurePsi = const Value.absent(),
     this.endPressurePsi = const Value.absent(),
     this.notes = const Value.absent(),
+    this.diveNumber = const Value.absent(),
+    this.timeIn = const Value.absent(),
+    this.timeOut = const Value.absent(),
+    this.tankType = const Value.absent(),
+    this.tankSize = const Value.absent(),
+    this.gasMix = const Value.absent(),
+    this.weightUsed = const Value.absent(),
+    this.activityType = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DivesCompanion.insert({
-    required String id,
+    this.id = const Value.absent(),
     required DateTime date,
     this.locationName = const Value.absent(),
     required int maxDepthFt,
@@ -440,9 +764,16 @@ class DivesCompanion extends UpdateCompanion<Dive> {
     this.startPressurePsi = const Value.absent(),
     this.endPressurePsi = const Value.absent(),
     this.notes = const Value.absent(),
+    this.diveNumber = const Value.absent(),
+    this.timeIn = const Value.absent(),
+    this.timeOut = const Value.absent(),
+    this.tankType = const Value.absent(),
+    this.tankSize = const Value.absent(),
+    this.gasMix = const Value.absent(),
+    this.weightUsed = const Value.absent(),
+    this.activityType = const Value.absent(),
     this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       date = Value(date),
+  }) : date = Value(date),
        maxDepthFt = Value(maxDepthFt),
        bottomTimeMin = Value(bottomTimeMin);
   static Insertable<Dive> custom({
@@ -454,6 +785,14 @@ class DivesCompanion extends UpdateCompanion<Dive> {
     Expression<int>? startPressurePsi,
     Expression<int>? endPressurePsi,
     Expression<String>? notes,
+    Expression<int>? diveNumber,
+    Expression<String>? timeIn,
+    Expression<String>? timeOut,
+    Expression<String>? tankType,
+    Expression<double>? tankSize,
+    Expression<String>? gasMix,
+    Expression<double>? weightUsed,
+    Expression<String>? activityType,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -465,6 +804,14 @@ class DivesCompanion extends UpdateCompanion<Dive> {
       if (startPressurePsi != null) 'start_pressure_psi': startPressurePsi,
       if (endPressurePsi != null) 'end_pressure_psi': endPressurePsi,
       if (notes != null) 'notes': notes,
+      if (diveNumber != null) 'dive_number': diveNumber,
+      if (timeIn != null) 'time_in': timeIn,
+      if (timeOut != null) 'time_out': timeOut,
+      if (tankType != null) 'tank_type': tankType,
+      if (tankSize != null) 'tank_size': tankSize,
+      if (gasMix != null) 'gas_mix': gasMix,
+      if (weightUsed != null) 'weight_used': weightUsed,
+      if (activityType != null) 'activity_type': activityType,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -478,6 +825,14 @@ class DivesCompanion extends UpdateCompanion<Dive> {
     Value<int?>? startPressurePsi,
     Value<int?>? endPressurePsi,
     Value<String?>? notes,
+    Value<int?>? diveNumber,
+    Value<String?>? timeIn,
+    Value<String?>? timeOut,
+    Value<String?>? tankType,
+    Value<double?>? tankSize,
+    Value<String?>? gasMix,
+    Value<double?>? weightUsed,
+    Value<String?>? activityType,
     Value<int>? rowid,
   }) {
     return DivesCompanion(
@@ -489,6 +844,14 @@ class DivesCompanion extends UpdateCompanion<Dive> {
       startPressurePsi: startPressurePsi ?? this.startPressurePsi,
       endPressurePsi: endPressurePsi ?? this.endPressurePsi,
       notes: notes ?? this.notes,
+      diveNumber: diveNumber ?? this.diveNumber,
+      timeIn: timeIn ?? this.timeIn,
+      timeOut: timeOut ?? this.timeOut,
+      tankType: tankType ?? this.tankType,
+      tankSize: tankSize ?? this.tankSize,
+      gasMix: gasMix ?? this.gasMix,
+      weightUsed: weightUsed ?? this.weightUsed,
+      activityType: activityType ?? this.activityType,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -520,6 +883,30 @@ class DivesCompanion extends UpdateCompanion<Dive> {
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (diveNumber.present) {
+      map['dive_number'] = Variable<int>(diveNumber.value);
+    }
+    if (timeIn.present) {
+      map['time_in'] = Variable<String>(timeIn.value);
+    }
+    if (timeOut.present) {
+      map['time_out'] = Variable<String>(timeOut.value);
+    }
+    if (tankType.present) {
+      map['tank_type'] = Variable<String>(tankType.value);
+    }
+    if (tankSize.present) {
+      map['tank_size'] = Variable<double>(tankSize.value);
+    }
+    if (gasMix.present) {
+      map['gas_mix'] = Variable<String>(gasMix.value);
+    }
+    if (weightUsed.present) {
+      map['weight_used'] = Variable<double>(weightUsed.value);
+    }
+    if (activityType.present) {
+      map['activity_type'] = Variable<String>(activityType.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -537,6 +924,14 @@ class DivesCompanion extends UpdateCompanion<Dive> {
           ..write('startPressurePsi: $startPressurePsi, ')
           ..write('endPressurePsi: $endPressurePsi, ')
           ..write('notes: $notes, ')
+          ..write('diveNumber: $diveNumber, ')
+          ..write('timeIn: $timeIn, ')
+          ..write('timeOut: $timeOut, ')
+          ..write('tankType: $tankType, ')
+          ..write('tankSize: $tankSize, ')
+          ..write('gasMix: $gasMix, ')
+          ..write('weightUsed: $weightUsed, ')
+          ..write('activityType: $activityType, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -556,7 +951,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 
 typedef $$DivesTableCreateCompanionBuilder =
     DivesCompanion Function({
-      required String id,
+      Value<String> id,
       required DateTime date,
       Value<String?> locationName,
       required int maxDepthFt,
@@ -564,6 +959,14 @@ typedef $$DivesTableCreateCompanionBuilder =
       Value<int?> startPressurePsi,
       Value<int?> endPressurePsi,
       Value<String?> notes,
+      Value<int?> diveNumber,
+      Value<String?> timeIn,
+      Value<String?> timeOut,
+      Value<String?> tankType,
+      Value<double?> tankSize,
+      Value<String?> gasMix,
+      Value<double?> weightUsed,
+      Value<String?> activityType,
       Value<int> rowid,
     });
 typedef $$DivesTableUpdateCompanionBuilder =
@@ -576,6 +979,14 @@ typedef $$DivesTableUpdateCompanionBuilder =
       Value<int?> startPressurePsi,
       Value<int?> endPressurePsi,
       Value<String?> notes,
+      Value<int?> diveNumber,
+      Value<String?> timeIn,
+      Value<String?> timeOut,
+      Value<String?> tankType,
+      Value<double?> tankSize,
+      Value<String?> gasMix,
+      Value<double?> weightUsed,
+      Value<String?> activityType,
       Value<int> rowid,
     });
 
@@ -624,6 +1035,46 @@ class $$DivesTableFilterComposer extends Composer<_$AppDatabase, $DivesTable> {
 
   ColumnFilters<String> get notes => $composableBuilder(
     column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get diveNumber => $composableBuilder(
+    column: $table.diveNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get timeIn => $composableBuilder(
+    column: $table.timeIn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get timeOut => $composableBuilder(
+    column: $table.timeOut,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tankType => $composableBuilder(
+    column: $table.tankType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get tankSize => $composableBuilder(
+    column: $table.tankSize,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get gasMix => $composableBuilder(
+    column: $table.gasMix,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get weightUsed => $composableBuilder(
+    column: $table.weightUsed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get activityType => $composableBuilder(
+    column: $table.activityType,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -676,6 +1127,46 @@ class $$DivesTableOrderingComposer
     column: $table.notes,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get diveNumber => $composableBuilder(
+    column: $table.diveNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get timeIn => $composableBuilder(
+    column: $table.timeIn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get timeOut => $composableBuilder(
+    column: $table.timeOut,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tankType => $composableBuilder(
+    column: $table.tankType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get tankSize => $composableBuilder(
+    column: $table.tankSize,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get gasMix => $composableBuilder(
+    column: $table.gasMix,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get weightUsed => $composableBuilder(
+    column: $table.weightUsed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get activityType => $composableBuilder(
+    column: $table.activityType,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DivesTableAnnotationComposer
@@ -720,6 +1211,36 @@ class $$DivesTableAnnotationComposer
 
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<int> get diveNumber => $composableBuilder(
+    column: $table.diveNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get timeIn =>
+      $composableBuilder(column: $table.timeIn, builder: (column) => column);
+
+  GeneratedColumn<String> get timeOut =>
+      $composableBuilder(column: $table.timeOut, builder: (column) => column);
+
+  GeneratedColumn<String> get tankType =>
+      $composableBuilder(column: $table.tankType, builder: (column) => column);
+
+  GeneratedColumn<double> get tankSize =>
+      $composableBuilder(column: $table.tankSize, builder: (column) => column);
+
+  GeneratedColumn<String> get gasMix =>
+      $composableBuilder(column: $table.gasMix, builder: (column) => column);
+
+  GeneratedColumn<double> get weightUsed => $composableBuilder(
+    column: $table.weightUsed,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get activityType => $composableBuilder(
+    column: $table.activityType,
+    builder: (column) => column,
+  );
 }
 
 class $$DivesTableTableManager
@@ -758,6 +1279,14 @@ class $$DivesTableTableManager
                 Value<int?> startPressurePsi = const Value.absent(),
                 Value<int?> endPressurePsi = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<int?> diveNumber = const Value.absent(),
+                Value<String?> timeIn = const Value.absent(),
+                Value<String?> timeOut = const Value.absent(),
+                Value<String?> tankType = const Value.absent(),
+                Value<double?> tankSize = const Value.absent(),
+                Value<String?> gasMix = const Value.absent(),
+                Value<double?> weightUsed = const Value.absent(),
+                Value<String?> activityType = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DivesCompanion(
                 id: id,
@@ -768,11 +1297,19 @@ class $$DivesTableTableManager
                 startPressurePsi: startPressurePsi,
                 endPressurePsi: endPressurePsi,
                 notes: notes,
+                diveNumber: diveNumber,
+                timeIn: timeIn,
+                timeOut: timeOut,
+                tankType: tankType,
+                tankSize: tankSize,
+                gasMix: gasMix,
+                weightUsed: weightUsed,
+                activityType: activityType,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
+                Value<String> id = const Value.absent(),
                 required DateTime date,
                 Value<String?> locationName = const Value.absent(),
                 required int maxDepthFt,
@@ -780,6 +1317,14 @@ class $$DivesTableTableManager
                 Value<int?> startPressurePsi = const Value.absent(),
                 Value<int?> endPressurePsi = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<int?> diveNumber = const Value.absent(),
+                Value<String?> timeIn = const Value.absent(),
+                Value<String?> timeOut = const Value.absent(),
+                Value<String?> tankType = const Value.absent(),
+                Value<double?> tankSize = const Value.absent(),
+                Value<String?> gasMix = const Value.absent(),
+                Value<double?> weightUsed = const Value.absent(),
+                Value<String?> activityType = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DivesCompanion.insert(
                 id: id,
@@ -790,6 +1335,14 @@ class $$DivesTableTableManager
                 startPressurePsi: startPressurePsi,
                 endPressurePsi: endPressurePsi,
                 notes: notes,
+                diveNumber: diveNumber,
+                timeIn: timeIn,
+                timeOut: timeOut,
+                tankType: tankType,
+                tankSize: tankSize,
+                gasMix: gasMix,
+                weightUsed: weightUsed,
+                activityType: activityType,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

@@ -10,6 +10,8 @@ class DiveDetailScreen extends StatelessWidget {
     required this.dive,
   });
 
+  String _formatDate(DateTime d) => "${d.month}/${d.day}/${d.year}";
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,13 +28,11 @@ class DiveDetailScreen extends StatelessWidget {
                 ),
               );
 
-              // if edited, refresh this screen
               if (result == true && context.mounted) {
                 Navigator.pop(context, true);
               }
             },
           ),
-
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () async {
@@ -56,58 +56,47 @@ class DiveDetailScreen extends StatelessWidget {
 
               if (confirm == true) {
                 await db.deleteDive(dive.id);
-
                 if (context.mounted) {
-                  Navigator.pop(context, true); // notify list to refresh
+                  Navigator.pop(context, true);
                 }
               }
             },
           ),
         ],
       ),
-
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: ListView(
           children: [
-            Text("Date: ${dive.date}", style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 10),
+            Text("Date: ${_formatDate(dive.date)}"),
 
-            Text(
-              "Location: ${dive.locationName ?? 'N/A'}",
-              style: const TextStyle(fontSize: 18),
-            ),
             const SizedBox(height: 10),
+            Text("Dive #: ${dive.diveNumber ?? '-'}"),
+            Text("Location: ${dive.locationName ?? '-'}"),
 
-            Text(
-              "Max Depth: ${dive.maxDepthFt} ft",
-              style: const TextStyle(fontSize: 18),
-            ),
             const SizedBox(height: 10),
+            Text("Max Depth: ${dive.maxDepthFt} ft"),
+            Text("Bottom Time: ${dive.bottomTimeMin} min"),
 
-            Text(
-              "Bottom Time: ${dive.bottomTimeMin} min",
-              style: const TextStyle(fontSize: 18),
-            ),
             const SizedBox(height: 10),
+            Text("Time In: ${dive.timeIn ?? '-'}"),
+            Text("Time Out: ${dive.timeOut ?? '-'}"),
 
-            Text(
-              "Start Pressure: ${dive.startPressurePsi ?? '-'} psi",
-              style: const TextStyle(fontSize: 18),
-            ),
             const SizedBox(height: 10),
+            Text("Tank Type: ${dive.tankType ?? '-'}"),
+            Text("Tank Size: ${dive.tankSize ?? '-'}"),
+            Text("Gas Mix: ${dive.gasMix ?? '-'}"),
 
-            Text(
-              "End Pressure: ${dive.endPressurePsi ?? '-'} psi",
-              style: const TextStyle(fontSize: 18),
-            ),
             const SizedBox(height: 10),
+            Text("Weight Used: ${dive.weightUsed ?? '-'}"),
+            Text("Activity: ${dive.activityType ?? '-'}"),
 
-            Text(
-              "Notes: ${dive.notes ?? ''}",
-              style: const TextStyle(fontSize: 18),
-            ),
+            const SizedBox(height: 10),
+            Text("Start Pressure: ${dive.startPressurePsi ?? '-'}"),
+            Text("End Pressure: ${dive.endPressurePsi ?? '-'}"),
+
+            const SizedBox(height: 10),
+            Text("Notes: ${dive.notes ?? ''}"),
           ],
         ),
       ),
