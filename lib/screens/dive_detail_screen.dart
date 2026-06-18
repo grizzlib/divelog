@@ -40,18 +40,20 @@ class DiveDetailScreen extends StatelessWidget {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text("Delete Dive?"),
-                  content: const Text("This cannot be undone."),
+                  content: const Text(
+                    "Are you sure you want to delete this dive? This action cannot be undone.",
+                  ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
                       child: const Text("Cancel"),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text("Delete"),
-                    ),
-                  ],
                 ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text("Delete"),
+              ),
+              ],
+            ),
               );
 
               if (confirm == true) {

@@ -4,7 +4,27 @@
 /// previously could cause a DropdownButtonFormField to throw if a dive's
 /// stored value wasn't present in one screen's local copy of the list.
 class DiveConstants {
-  static const List<String> tankTypes = ['Aluminum', 'Steel'];
+  static const List<String> tankTypes = [
+    'Aluminum',
+    'Steel',
+  ];
+
+  static const List<double> tankSizes = [
+    63,
+    80,
+    100,
+    120,
+  ];
+
+  static const double defaultTankSize = 80;
+
+  static const List<String> gasMixes = [
+    'Air',
+    'Nitrox',
+    'Other',
+  ];
+
+  static const String defaultGasMix = 'Air';
 
   static const List<String> activityTypes = [
     'Recreational',

@@ -6,10 +6,7 @@ import '../constants/dive_constants.dart';
 class EditDiveScreen extends StatefulWidget {
   final Dive dive;
 
-  const EditDiveScreen({
-    super.key,
-    required this.dive,
-  });
+  const EditDiveScreen({super.key, required this.dive});
 
   @override
   State<EditDiveScreen> createState() => _EditDiveScreenState();
@@ -26,8 +23,6 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
   late TextEditingController _timeInController;
   late TextEditingController _timeOutController;
 
-  late TextEditingController _tankSizeController;
-  late TextEditingController _gasMixController;
   late TextEditingController _weightUsedController;
 
   late TextEditingController _startPressureController;
@@ -35,36 +30,33 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
   late TextEditingController _notesController;
 
   String? _selectedTankType;
+  double? _selectedTankSize;
+  String? _selectedGasMix;
   String? _selectedActivityType;
 
   @override
   void initState() {
     super.initState();
 
-    _locationController =
-        TextEditingController(text: widget.dive.locationName ?? '');
-
-    _depthController =
-        TextEditingController(text: widget.dive.maxDepthFt.toString());
-
-    _bottomTimeController =
-        TextEditingController(text: widget.dive.bottomTimeMin.toString());
-
-    _diveNumberController =
-        TextEditingController(text: widget.dive.diveNumber?.toString() ?? '');
-
-    _timeInController =
-        TextEditingController(text: widget.dive.timeIn ?? '');
-
-    _timeOutController =
-        TextEditingController(text: widget.dive.timeOut ?? '');
-
-    _tankSizeController = TextEditingController(
-      text: widget.dive.tankSize?.toString() ?? '',
+    _locationController = TextEditingController(
+      text: widget.dive.locationName ?? '',
     );
 
-    _gasMixController =
-        TextEditingController(text: widget.dive.gasMix ?? '');
+    _depthController = TextEditingController(
+      text: widget.dive.maxDepthFt.toString(),
+    );
+
+    _bottomTimeController = TextEditingController(
+      text: widget.dive.bottomTimeMin.toString(),
+    );
+
+    _diveNumberController = TextEditingController(
+      text: widget.dive.diveNumber?.toString() ?? '',
+    );
+
+    _timeInController = TextEditingController(text: widget.dive.timeIn ?? '');
+
+    _timeOutController = TextEditingController(text: widget.dive.timeOut ?? '');
 
     _weightUsedController = TextEditingController(
       text: widget.dive.weightUsed?.toString() ?? '',
@@ -81,16 +73,23 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
     _notesController = TextEditingController(text: widget.dive.notes ?? '');
 
     // Restore dropdown selections. If the stored value no longer exists in
-    // the current option list, fall back to null so the dropdown doesn't
-    // throw an assertion error.
+    // the current option list, fall back safely so the dropdown does not throw.
     _selectedTankType = DiveConstants.tankTypes.contains(widget.dive.tankType)
         ? widget.dive.tankType
         : null;
 
+    _selectedTankSize = DiveConstants.tankSizes.contains(widget.dive.tankSize)
+        ? widget.dive.tankSize
+        : DiveConstants.defaultTankSize;
+
+    _selectedGasMix = DiveConstants.gasMixes.contains(widget.dive.gasMix)
+        ? widget.dive.gasMix
+        : DiveConstants.defaultGasMix;
+
     _selectedActivityType =
         DiveConstants.activityTypes.contains(widget.dive.activityType)
-            ? widget.dive.activityType
-            : null;
+        ? widget.dive.activityType
+        : null;
   }
 
   @override
@@ -102,8 +101,6 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
       _diveNumberController,
       _timeInController,
       _timeOutController,
-      _tankSizeController,
-      _gasMixController,
       _weightUsedController,
       _startPressureController,
       _endPressureController,
@@ -162,11 +159,9 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
         ),
 
         tankType: Value(_selectedTankType),
-        tankSize: Value(_toDouble(_tankSizeController.text)),
+        tankSize: Value(_selectedTankSize),
 
-        gasMix: Value(
-          _gasMixController.text.isEmpty ? null : _gasMixController.text,
-        ),
+        gasMix: Value(_selectedGasMix),
 
         weightUsed: Value(_toDouble(_weightUsedController.text)),
 
@@ -212,16 +207,16 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
                 controller: _depthController,
                 keyboardType: TextInputType.number,
                 validator: _requiredIntValidator,
-                decoration:
-                    const InputDecoration(labelText: "Max Depth (ft)"),
+                decoration: const InputDecoration(labelText: "Max Depth (ft)"),
               ),
 
               TextFormField(
                 controller: _bottomTimeController,
                 keyboardType: TextInputType.number,
                 validator: _requiredIntValidator,
-                decoration:
-                    const InputDecoration(labelText: "Bottom Time (min)"),
+                decoration: const InputDecoration(
+                  labelText: "Bottom Time (min)",
+                ),
               ),
 
               TextFormField(
@@ -237,32 +232,48 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
               DropdownButtonFormField<String>(
                 value: _selectedTankType,
                 items: DiveConstants.tankTypes
-                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                    .map(
+                      (t) => DropdownMenuItem<String>(value: t, child: Text(t)),
+                    )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedTankType = v),
                 decoration: const InputDecoration(labelText: "Tank Type"),
               ),
 
-              TextFormField(
-                controller: _tankSizeController,
-                keyboardType: TextInputType.number,
-                validator: _optionalDoubleValidator,
+              DropdownButtonFormField<double>(
+                value: _selectedTankSize,
+                items: DiveConstants.tankSizes
+                    .map(
+                      (s) => DropdownMenuItem<double>(
+                        value: s,
+                        child: Text(s.toStringAsFixed(0)),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (v) => setState(() => _selectedTankSize = v),
                 decoration: const InputDecoration(labelText: "Tank Size"),
               ),
 
-              TextFormField(
-                controller: _gasMixController,
+              DropdownButtonFormField<String>(
+                value: _selectedGasMix,
+                items: DiveConstants.gasMixes
+                    .map(
+                      (g) => DropdownMenuItem<String>(value: g, child: Text(g)),
+                    )
+                    .toList(),
+                onChanged: (v) => setState(() => _selectedGasMix = v),
                 decoration: const InputDecoration(labelText: "Gas Mix"),
               ),
 
               DropdownButtonFormField<String>(
                 value: _selectedActivityType,
                 items: DiveConstants.activityTypes
-                    .map((a) => DropdownMenuItem(value: a, child: Text(a)))
+                    .map(
+                      (a) => DropdownMenuItem<String>(value: a, child: Text(a)),
+                    )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedActivityType = v),
-                decoration:
-                    const InputDecoration(labelText: "Activity Type"),
+                decoration: const InputDecoration(labelText: "Activity Type"),
               ),
 
               TextFormField(
@@ -276,8 +287,7 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
                 controller: _startPressureController,
                 keyboardType: TextInputType.number,
                 validator: _optionalIntValidator,
-                decoration:
-                    const InputDecoration(labelText: "Start Pressure"),
+                decoration: const InputDecoration(labelText: "Start Pressure"),
               ),
 
               TextFormField(
