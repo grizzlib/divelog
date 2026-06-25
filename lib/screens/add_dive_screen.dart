@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../db/app_database.dart';
 import 'package:drift/drift.dart';
 import '../constants/dive_constants.dart';
+import '../widgets/section_label.dart';
 
 class AddDiveScreen extends StatefulWidget {
   const AddDiveScreen({super.key});
@@ -17,7 +18,7 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
   // Date state
   // ---------------------------------------------------------------------------
 
-  DateTime _date = DateTime.now();
+  DateTime _date = _dateOnly(DateTime.now());
 
   // ---------------------------------------------------------------------------
   // Text field controllers
@@ -96,6 +97,11 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
 
   int? _toInt(String v) => v.isEmpty ? null : int.tryParse(v);
   double? _toDouble(String v) => v.isEmpty ? null : double.tryParse(v);
+
+  /// Keeps saved form dates as calendar dates without a time-of-day component.
+  static DateTime _dateOnly(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
 
   // ---------------------------------------------------------------------------
   // Validators
@@ -195,27 +201,16 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
     );
 
     if (picked != null) {
-      setState(() => _date = picked);
+      setState(() => _date = _dateOnly(picked));
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Reusable section label
-  //
-  // This keeps the form easier to read as more fields are added.
-  // ---------------------------------------------------------------------------
-
-  Widget _sectionLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 18, bottom: 6),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
+  /// Formats the currently selected date for the form.
+  ///
+  /// Future change point:
+  /// If the app gets shared date formatting later, this can move to a utility.
+  String _formatDate(DateTime date) {
+    return "${date.month}/${date.day}/${date.year}";
   }
 
   // ---------------------------------------------------------------------------
@@ -232,10 +227,10 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              _sectionLabel("Dive Info"),
+              const SectionLabel("Dive Info"),
 
               ListTile(
-                title: Text("Date: ${_date.toLocal()}".split(' ')[0]),
+                title: Text("Date: ${_formatDate(_date)}"),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: _pickDate,
               ),
@@ -278,16 +273,13 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
                 decoration: const InputDecoration(labelText: "Time Out"),
               ),
 
-              _sectionLabel("Equipment"),
+              const SectionLabel("Equipment"),
 
               DropdownButtonFormField<String>(
-                value: _selectedTankType,
+                initialValue: _selectedTankType,
                 items: DiveConstants.tankTypes
                     .map(
-                      (t) => DropdownMenuItem<String>(
-                        value: t,
-                        child: Text(t),
-                      ),
+                      (t) => DropdownMenuItem<String>(value: t, child: Text(t)),
                     )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedTankType = v),
@@ -295,7 +287,7 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
               ),
 
               DropdownButtonFormField<double>(
-                value: _selectedTankSize,
+                initialValue: _selectedTankSize,
                 items: DiveConstants.tankSizes
                     .map(
                       (s) => DropdownMenuItem<double>(
@@ -309,13 +301,10 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
               ),
 
               DropdownButtonFormField<String>(
-                value: _selectedGasMix,
+                initialValue: _selectedGasMix,
                 items: DiveConstants.gasMixes
                     .map(
-                      (g) => DropdownMenuItem<String>(
-                        value: g,
-                        child: Text(g),
-                      ),
+                      (g) => DropdownMenuItem<String>(value: g, child: Text(g)),
                     )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedGasMix = v),
@@ -323,13 +312,10 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
               ),
 
               DropdownButtonFormField<String>(
-                value: _selectedExposureProtection,
+                initialValue: _selectedExposureProtection,
                 items: DiveConstants.exposureProtectionTypes
                     .map(
-                      (e) => DropdownMenuItem<String>(
-                        value: e,
-                        child: Text(e),
-                      ),
+                      (e) => DropdownMenuItem<String>(value: e, child: Text(e)),
                     )
                     .toList(),
                 onChanged: (v) {
@@ -347,16 +333,13 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
                 decoration: const InputDecoration(labelText: "Weight Used"),
               ),
 
-              _sectionLabel("Dive Conditions"),
+              const SectionLabel("Dive Conditions"),
 
               DropdownButtonFormField<String>(
-                value: _selectedActivityType,
+                initialValue: _selectedActivityType,
                 items: DiveConstants.activityTypes
                     .map(
-                      (a) => DropdownMenuItem<String>(
-                        value: a,
-                        child: Text(a),
-                      ),
+                      (a) => DropdownMenuItem<String>(value: a, child: Text(a)),
                     )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedActivityType = v),
@@ -367,9 +350,7 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
                 controller: _visibilityController,
                 keyboardType: TextInputType.number,
                 validator: _optionalIntValidator,
-                decoration: const InputDecoration(
-                  labelText: "Visibility (ft)",
-                ),
+                decoration: const InputDecoration(labelText: "Visibility (ft)"),
               ),
 
               TextFormField(
@@ -399,7 +380,7 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
                 ),
               ),
 
-              _sectionLabel("Pressure"),
+              const SectionLabel("Pressure"),
 
               TextFormField(
                 controller: _startPressureController,
@@ -415,7 +396,7 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
                 decoration: const InputDecoration(labelText: "End Pressure"),
               ),
 
-              _sectionLabel("Notes"),
+              const SectionLabel("Notes"),
 
               TextFormField(
                 controller: _notesController,
