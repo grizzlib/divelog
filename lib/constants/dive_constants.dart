@@ -36,4 +36,16 @@ class DiveConstants {
     'Research',
     'Other',
   ];
+  static const List<String> exposureProtectionTypes = [
+  'None',
+  'Rash Guard',
+  'Dive Skin',
+  'Shorty Wetsuit',
+  '3mm Wetsuit',
+  '5mm Wetsuit',
+  '7mm Wetsuit',
+  'Semi-Dry Suit',
+  'Drysuit',
+  'Other',
+];
 }

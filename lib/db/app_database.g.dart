@@ -175,6 +175,61 @@ class $DivesTable extends Dives with TableInfo<$DivesTable, Dive> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _exposureProtectionMeta =
+      const VerificationMeta('exposureProtection');
+  @override
+  late final GeneratedColumn<String> exposureProtection =
+      GeneratedColumn<String>(
+        'exposure_protection',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _visibilityFtMeta = const VerificationMeta(
+    'visibilityFt',
+  );
+  @override
+  late final GeneratedColumn<int> visibilityFt = GeneratedColumn<int>(
+    'visibility_ft',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _airTempFMeta = const VerificationMeta(
+    'airTempF',
+  );
+  @override
+  late final GeneratedColumn<int> airTempF = GeneratedColumn<int>(
+    'air_temp_f',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _surfaceTempFMeta = const VerificationMeta(
+    'surfaceTempF',
+  );
+  @override
+  late final GeneratedColumn<int> surfaceTempF = GeneratedColumn<int>(
+    'surface_temp_f',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _bottomTempFMeta = const VerificationMeta(
+    'bottomTempF',
+  );
+  @override
+  late final GeneratedColumn<int> bottomTempF = GeneratedColumn<int>(
+    'bottom_temp_f',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -193,6 +248,11 @@ class $DivesTable extends Dives with TableInfo<$DivesTable, Dive> {
     gasMix,
     weightUsed,
     activityType,
+    exposureProtection,
+    visibilityFt,
+    airTempF,
+    surfaceTempF,
+    bottomTempF,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -323,6 +383,48 @@ class $DivesTable extends Dives with TableInfo<$DivesTable, Dive> {
         ),
       );
     }
+    if (data.containsKey('exposure_protection')) {
+      context.handle(
+        _exposureProtectionMeta,
+        exposureProtection.isAcceptableOrUnknown(
+          data['exposure_protection']!,
+          _exposureProtectionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('visibility_ft')) {
+      context.handle(
+        _visibilityFtMeta,
+        visibilityFt.isAcceptableOrUnknown(
+          data['visibility_ft']!,
+          _visibilityFtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('air_temp_f')) {
+      context.handle(
+        _airTempFMeta,
+        airTempF.isAcceptableOrUnknown(data['air_temp_f']!, _airTempFMeta),
+      );
+    }
+    if (data.containsKey('surface_temp_f')) {
+      context.handle(
+        _surfaceTempFMeta,
+        surfaceTempF.isAcceptableOrUnknown(
+          data['surface_temp_f']!,
+          _surfaceTempFMeta,
+        ),
+      );
+    }
+    if (data.containsKey('bottom_temp_f')) {
+      context.handle(
+        _bottomTempFMeta,
+        bottomTempF.isAcceptableOrUnknown(
+          data['bottom_temp_f']!,
+          _bottomTempFMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -396,6 +498,26 @@ class $DivesTable extends Dives with TableInfo<$DivesTable, Dive> {
         DriftSqlType.string,
         data['${effectivePrefix}activity_type'],
       ),
+      exposureProtection: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exposure_protection'],
+      ),
+      visibilityFt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}visibility_ft'],
+      ),
+      airTempF: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}air_temp_f'],
+      ),
+      surfaceTempF: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}surface_temp_f'],
+      ),
+      bottomTempF: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bottom_temp_f'],
+      ),
     );
   }
 
@@ -406,22 +528,79 @@ class $DivesTable extends Dives with TableInfo<$DivesTable, Dive> {
 }
 
 class Dive extends DataClass implements Insertable<Dive> {
+  /// Unique ID for each dive.
+  ///
+  /// Generated automatically using UUID when a new dive is inserted.
   final String id;
+
+  /// Calendar date of the dive.
   final DateTime date;
+
+  /// Dive site or general location name.
   final String? locationName;
+
+  /// Maximum depth reached, stored in feet.
   final int maxDepthFt;
+
+  /// Bottom time, stored in minutes.
   final int bottomTimeMin;
+
+  /// Starting tank pressure, stored in PSI.
   final int? startPressurePsi;
+
+  /// Ending tank pressure, stored in PSI.
   final int? endPressurePsi;
+
+  /// Free-form notes about the dive.
   final String? notes;
+
+  /// Optional dive number from a physical logbook or sequence.
   final int? diveNumber;
+
+  /// Time the dive started.
+  ///
+  /// Stored as text for now to keep entry simple.
+  /// Future change point:
+  /// We may later move this to a real time/date type if needed.
   final String? timeIn;
+
+  /// Time the dive ended.
+  ///
+  /// Stored as text for now to keep entry simple.
   final String? timeOut;
+
+  /// Tank material/type, such as Aluminum or Steel.
   final String? tankType;
+
+  /// Tank size, stored as a real number for future SAC/RMV calculations.
   final double? tankSize;
+
+  /// Breathing gas, such as Air, Nitrox, or Other.
   final String? gasMix;
+
+  /// Weight used, stored as a real number in pounds.
   final double? weightUsed;
+
+  /// General activity type, such as Recreational, Training, Wreck, etc.
   final String? activityType;
+
+  /// Exposure protection used for the dive.
+  ///
+  /// Examples:
+  /// None, Rash Guard, 3mm Wetsuit, 5mm Wetsuit, Drysuit, etc.
+  final String? exposureProtection;
+
+  /// Visibility, stored in feet.
+  final int? visibilityFt;
+
+  /// Air temperature, stored in Fahrenheit.
+  final int? airTempF;
+
+  /// Surface water temperature, stored in Fahrenheit.
+  final int? surfaceTempF;
+
+  /// Bottom water temperature, stored in Fahrenheit.
+  final int? bottomTempF;
   const Dive({
     required this.id,
     required this.date,
@@ -439,6 +618,11 @@ class Dive extends DataClass implements Insertable<Dive> {
     this.gasMix,
     this.weightUsed,
     this.activityType,
+    this.exposureProtection,
+    this.visibilityFt,
+    this.airTempF,
+    this.surfaceTempF,
+    this.bottomTempF,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -482,6 +666,21 @@ class Dive extends DataClass implements Insertable<Dive> {
     }
     if (!nullToAbsent || activityType != null) {
       map['activity_type'] = Variable<String>(activityType);
+    }
+    if (!nullToAbsent || exposureProtection != null) {
+      map['exposure_protection'] = Variable<String>(exposureProtection);
+    }
+    if (!nullToAbsent || visibilityFt != null) {
+      map['visibility_ft'] = Variable<int>(visibilityFt);
+    }
+    if (!nullToAbsent || airTempF != null) {
+      map['air_temp_f'] = Variable<int>(airTempF);
+    }
+    if (!nullToAbsent || surfaceTempF != null) {
+      map['surface_temp_f'] = Variable<int>(surfaceTempF);
+    }
+    if (!nullToAbsent || bottomTempF != null) {
+      map['bottom_temp_f'] = Variable<int>(bottomTempF);
     }
     return map;
   }
@@ -528,6 +727,21 @@ class Dive extends DataClass implements Insertable<Dive> {
       activityType: activityType == null && nullToAbsent
           ? const Value.absent()
           : Value(activityType),
+      exposureProtection: exposureProtection == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exposureProtection),
+      visibilityFt: visibilityFt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(visibilityFt),
+      airTempF: airTempF == null && nullToAbsent
+          ? const Value.absent()
+          : Value(airTempF),
+      surfaceTempF: surfaceTempF == null && nullToAbsent
+          ? const Value.absent()
+          : Value(surfaceTempF),
+      bottomTempF: bottomTempF == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bottomTempF),
     );
   }
 
@@ -553,6 +767,13 @@ class Dive extends DataClass implements Insertable<Dive> {
       gasMix: serializer.fromJson<String?>(json['gasMix']),
       weightUsed: serializer.fromJson<double?>(json['weightUsed']),
       activityType: serializer.fromJson<String?>(json['activityType']),
+      exposureProtection: serializer.fromJson<String?>(
+        json['exposureProtection'],
+      ),
+      visibilityFt: serializer.fromJson<int?>(json['visibilityFt']),
+      airTempF: serializer.fromJson<int?>(json['airTempF']),
+      surfaceTempF: serializer.fromJson<int?>(json['surfaceTempF']),
+      bottomTempF: serializer.fromJson<int?>(json['bottomTempF']),
     );
   }
   @override
@@ -575,6 +796,11 @@ class Dive extends DataClass implements Insertable<Dive> {
       'gasMix': serializer.toJson<String?>(gasMix),
       'weightUsed': serializer.toJson<double?>(weightUsed),
       'activityType': serializer.toJson<String?>(activityType),
+      'exposureProtection': serializer.toJson<String?>(exposureProtection),
+      'visibilityFt': serializer.toJson<int?>(visibilityFt),
+      'airTempF': serializer.toJson<int?>(airTempF),
+      'surfaceTempF': serializer.toJson<int?>(surfaceTempF),
+      'bottomTempF': serializer.toJson<int?>(bottomTempF),
     };
   }
 
@@ -595,6 +821,11 @@ class Dive extends DataClass implements Insertable<Dive> {
     Value<String?> gasMix = const Value.absent(),
     Value<double?> weightUsed = const Value.absent(),
     Value<String?> activityType = const Value.absent(),
+    Value<String?> exposureProtection = const Value.absent(),
+    Value<int?> visibilityFt = const Value.absent(),
+    Value<int?> airTempF = const Value.absent(),
+    Value<int?> surfaceTempF = const Value.absent(),
+    Value<int?> bottomTempF = const Value.absent(),
   }) => Dive(
     id: id ?? this.id,
     date: date ?? this.date,
@@ -616,6 +847,13 @@ class Dive extends DataClass implements Insertable<Dive> {
     gasMix: gasMix.present ? gasMix.value : this.gasMix,
     weightUsed: weightUsed.present ? weightUsed.value : this.weightUsed,
     activityType: activityType.present ? activityType.value : this.activityType,
+    exposureProtection: exposureProtection.present
+        ? exposureProtection.value
+        : this.exposureProtection,
+    visibilityFt: visibilityFt.present ? visibilityFt.value : this.visibilityFt,
+    airTempF: airTempF.present ? airTempF.value : this.airTempF,
+    surfaceTempF: surfaceTempF.present ? surfaceTempF.value : this.surfaceTempF,
+    bottomTempF: bottomTempF.present ? bottomTempF.value : this.bottomTempF,
   );
   Dive copyWithCompanion(DivesCompanion data) {
     return Dive(
@@ -651,6 +889,19 @@ class Dive extends DataClass implements Insertable<Dive> {
       activityType: data.activityType.present
           ? data.activityType.value
           : this.activityType,
+      exposureProtection: data.exposureProtection.present
+          ? data.exposureProtection.value
+          : this.exposureProtection,
+      visibilityFt: data.visibilityFt.present
+          ? data.visibilityFt.value
+          : this.visibilityFt,
+      airTempF: data.airTempF.present ? data.airTempF.value : this.airTempF,
+      surfaceTempF: data.surfaceTempF.present
+          ? data.surfaceTempF.value
+          : this.surfaceTempF,
+      bottomTempF: data.bottomTempF.present
+          ? data.bottomTempF.value
+          : this.bottomTempF,
     );
   }
 
@@ -672,13 +923,18 @@ class Dive extends DataClass implements Insertable<Dive> {
           ..write('tankSize: $tankSize, ')
           ..write('gasMix: $gasMix, ')
           ..write('weightUsed: $weightUsed, ')
-          ..write('activityType: $activityType')
+          ..write('activityType: $activityType, ')
+          ..write('exposureProtection: $exposureProtection, ')
+          ..write('visibilityFt: $visibilityFt, ')
+          ..write('airTempF: $airTempF, ')
+          ..write('surfaceTempF: $surfaceTempF, ')
+          ..write('bottomTempF: $bottomTempF')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     date,
     locationName,
@@ -695,7 +951,12 @@ class Dive extends DataClass implements Insertable<Dive> {
     gasMix,
     weightUsed,
     activityType,
-  );
+    exposureProtection,
+    visibilityFt,
+    airTempF,
+    surfaceTempF,
+    bottomTempF,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -715,7 +976,12 @@ class Dive extends DataClass implements Insertable<Dive> {
           other.tankSize == this.tankSize &&
           other.gasMix == this.gasMix &&
           other.weightUsed == this.weightUsed &&
-          other.activityType == this.activityType);
+          other.activityType == this.activityType &&
+          other.exposureProtection == this.exposureProtection &&
+          other.visibilityFt == this.visibilityFt &&
+          other.airTempF == this.airTempF &&
+          other.surfaceTempF == this.surfaceTempF &&
+          other.bottomTempF == this.bottomTempF);
 }
 
 class DivesCompanion extends UpdateCompanion<Dive> {
@@ -735,6 +1001,11 @@ class DivesCompanion extends UpdateCompanion<Dive> {
   final Value<String?> gasMix;
   final Value<double?> weightUsed;
   final Value<String?> activityType;
+  final Value<String?> exposureProtection;
+  final Value<int?> visibilityFt;
+  final Value<int?> airTempF;
+  final Value<int?> surfaceTempF;
+  final Value<int?> bottomTempF;
   final Value<int> rowid;
   const DivesCompanion({
     this.id = const Value.absent(),
@@ -753,6 +1024,11 @@ class DivesCompanion extends UpdateCompanion<Dive> {
     this.gasMix = const Value.absent(),
     this.weightUsed = const Value.absent(),
     this.activityType = const Value.absent(),
+    this.exposureProtection = const Value.absent(),
+    this.visibilityFt = const Value.absent(),
+    this.airTempF = const Value.absent(),
+    this.surfaceTempF = const Value.absent(),
+    this.bottomTempF = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DivesCompanion.insert({
@@ -772,6 +1048,11 @@ class DivesCompanion extends UpdateCompanion<Dive> {
     this.gasMix = const Value.absent(),
     this.weightUsed = const Value.absent(),
     this.activityType = const Value.absent(),
+    this.exposureProtection = const Value.absent(),
+    this.visibilityFt = const Value.absent(),
+    this.airTempF = const Value.absent(),
+    this.surfaceTempF = const Value.absent(),
+    this.bottomTempF = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : date = Value(date),
        maxDepthFt = Value(maxDepthFt),
@@ -793,6 +1074,11 @@ class DivesCompanion extends UpdateCompanion<Dive> {
     Expression<String>? gasMix,
     Expression<double>? weightUsed,
     Expression<String>? activityType,
+    Expression<String>? exposureProtection,
+    Expression<int>? visibilityFt,
+    Expression<int>? airTempF,
+    Expression<int>? surfaceTempF,
+    Expression<int>? bottomTempF,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -812,6 +1098,11 @@ class DivesCompanion extends UpdateCompanion<Dive> {
       if (gasMix != null) 'gas_mix': gasMix,
       if (weightUsed != null) 'weight_used': weightUsed,
       if (activityType != null) 'activity_type': activityType,
+      if (exposureProtection != null) 'exposure_protection': exposureProtection,
+      if (visibilityFt != null) 'visibility_ft': visibilityFt,
+      if (airTempF != null) 'air_temp_f': airTempF,
+      if (surfaceTempF != null) 'surface_temp_f': surfaceTempF,
+      if (bottomTempF != null) 'bottom_temp_f': bottomTempF,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -833,6 +1124,11 @@ class DivesCompanion extends UpdateCompanion<Dive> {
     Value<String?>? gasMix,
     Value<double?>? weightUsed,
     Value<String?>? activityType,
+    Value<String?>? exposureProtection,
+    Value<int?>? visibilityFt,
+    Value<int?>? airTempF,
+    Value<int?>? surfaceTempF,
+    Value<int?>? bottomTempF,
     Value<int>? rowid,
   }) {
     return DivesCompanion(
@@ -852,6 +1148,11 @@ class DivesCompanion extends UpdateCompanion<Dive> {
       gasMix: gasMix ?? this.gasMix,
       weightUsed: weightUsed ?? this.weightUsed,
       activityType: activityType ?? this.activityType,
+      exposureProtection: exposureProtection ?? this.exposureProtection,
+      visibilityFt: visibilityFt ?? this.visibilityFt,
+      airTempF: airTempF ?? this.airTempF,
+      surfaceTempF: surfaceTempF ?? this.surfaceTempF,
+      bottomTempF: bottomTempF ?? this.bottomTempF,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -907,6 +1208,21 @@ class DivesCompanion extends UpdateCompanion<Dive> {
     if (activityType.present) {
       map['activity_type'] = Variable<String>(activityType.value);
     }
+    if (exposureProtection.present) {
+      map['exposure_protection'] = Variable<String>(exposureProtection.value);
+    }
+    if (visibilityFt.present) {
+      map['visibility_ft'] = Variable<int>(visibilityFt.value);
+    }
+    if (airTempF.present) {
+      map['air_temp_f'] = Variable<int>(airTempF.value);
+    }
+    if (surfaceTempF.present) {
+      map['surface_temp_f'] = Variable<int>(surfaceTempF.value);
+    }
+    if (bottomTempF.present) {
+      map['bottom_temp_f'] = Variable<int>(bottomTempF.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -932,6 +1248,11 @@ class DivesCompanion extends UpdateCompanion<Dive> {
           ..write('gasMix: $gasMix, ')
           ..write('weightUsed: $weightUsed, ')
           ..write('activityType: $activityType, ')
+          ..write('exposureProtection: $exposureProtection, ')
+          ..write('visibilityFt: $visibilityFt, ')
+          ..write('airTempF: $airTempF, ')
+          ..write('surfaceTempF: $surfaceTempF, ')
+          ..write('bottomTempF: $bottomTempF, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -967,6 +1288,11 @@ typedef $$DivesTableCreateCompanionBuilder =
       Value<String?> gasMix,
       Value<double?> weightUsed,
       Value<String?> activityType,
+      Value<String?> exposureProtection,
+      Value<int?> visibilityFt,
+      Value<int?> airTempF,
+      Value<int?> surfaceTempF,
+      Value<int?> bottomTempF,
       Value<int> rowid,
     });
 typedef $$DivesTableUpdateCompanionBuilder =
@@ -987,6 +1313,11 @@ typedef $$DivesTableUpdateCompanionBuilder =
       Value<String?> gasMix,
       Value<double?> weightUsed,
       Value<String?> activityType,
+      Value<String?> exposureProtection,
+      Value<int?> visibilityFt,
+      Value<int?> airTempF,
+      Value<int?> surfaceTempF,
+      Value<int?> bottomTempF,
       Value<int> rowid,
     });
 
@@ -1075,6 +1406,31 @@ class $$DivesTableFilterComposer extends Composer<_$AppDatabase, $DivesTable> {
 
   ColumnFilters<String> get activityType => $composableBuilder(
     column: $table.activityType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get exposureProtection => $composableBuilder(
+    column: $table.exposureProtection,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get visibilityFt => $composableBuilder(
+    column: $table.visibilityFt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get airTempF => $composableBuilder(
+    column: $table.airTempF,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get surfaceTempF => $composableBuilder(
+    column: $table.surfaceTempF,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bottomTempF => $composableBuilder(
+    column: $table.bottomTempF,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1167,6 +1523,31 @@ class $$DivesTableOrderingComposer
     column: $table.activityType,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get exposureProtection => $composableBuilder(
+    column: $table.exposureProtection,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get visibilityFt => $composableBuilder(
+    column: $table.visibilityFt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get airTempF => $composableBuilder(
+    column: $table.airTempF,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get surfaceTempF => $composableBuilder(
+    column: $table.surfaceTempF,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bottomTempF => $composableBuilder(
+    column: $table.bottomTempF,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DivesTableAnnotationComposer
@@ -1241,6 +1622,29 @@ class $$DivesTableAnnotationComposer
     column: $table.activityType,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get exposureProtection => $composableBuilder(
+    column: $table.exposureProtection,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get visibilityFt => $composableBuilder(
+    column: $table.visibilityFt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get airTempF =>
+      $composableBuilder(column: $table.airTempF, builder: (column) => column);
+
+  GeneratedColumn<int> get surfaceTempF => $composableBuilder(
+    column: $table.surfaceTempF,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get bottomTempF => $composableBuilder(
+    column: $table.bottomTempF,
+    builder: (column) => column,
+  );
 }
 
 class $$DivesTableTableManager
@@ -1287,6 +1691,11 @@ class $$DivesTableTableManager
                 Value<String?> gasMix = const Value.absent(),
                 Value<double?> weightUsed = const Value.absent(),
                 Value<String?> activityType = const Value.absent(),
+                Value<String?> exposureProtection = const Value.absent(),
+                Value<int?> visibilityFt = const Value.absent(),
+                Value<int?> airTempF = const Value.absent(),
+                Value<int?> surfaceTempF = const Value.absent(),
+                Value<int?> bottomTempF = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DivesCompanion(
                 id: id,
@@ -1305,6 +1714,11 @@ class $$DivesTableTableManager
                 gasMix: gasMix,
                 weightUsed: weightUsed,
                 activityType: activityType,
+                exposureProtection: exposureProtection,
+                visibilityFt: visibilityFt,
+                airTempF: airTempF,
+                surfaceTempF: surfaceTempF,
+                bottomTempF: bottomTempF,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1325,6 +1739,11 @@ class $$DivesTableTableManager
                 Value<String?> gasMix = const Value.absent(),
                 Value<double?> weightUsed = const Value.absent(),
                 Value<String?> activityType = const Value.absent(),
+                Value<String?> exposureProtection = const Value.absent(),
+                Value<int?> visibilityFt = const Value.absent(),
+                Value<int?> airTempF = const Value.absent(),
+                Value<int?> surfaceTempF = const Value.absent(),
+                Value<int?> bottomTempF = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DivesCompanion.insert(
                 id: id,
@@ -1343,6 +1762,11 @@ class $$DivesTableTableManager
                 gasMix: gasMix,
                 weightUsed: weightUsed,
                 activityType: activityType,
+                exposureProtection: exposureProtection,
+                visibilityFt: visibilityFt,
+                airTempF: airTempF,
+                surfaceTempF: surfaceTempF,
+                bottomTempF: bottomTempF,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

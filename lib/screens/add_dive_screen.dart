@@ -13,7 +13,21 @@ class AddDiveScreen extends StatefulWidget {
 class _AddDiveScreenState extends State<AddDiveScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  // ---------------------------------------------------------------------------
+  // Date state
+  // ---------------------------------------------------------------------------
+
   DateTime _date = DateTime.now();
+
+  // ---------------------------------------------------------------------------
+  // Text field controllers
+  //
+  // These hold the values entered into text fields.
+  //
+  // Future change point:
+  // If a field becomes a dropdown, remove its controller and replace it with a
+  // selected value variable, like we did for tank size and gas mix.
+  // ---------------------------------------------------------------------------
 
   final _locationController = TextEditingController();
   final _depthController = TextEditingController();
@@ -28,15 +42,29 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
   final _startPressureController = TextEditingController();
   final _endPressureController = TextEditingController();
 
+  // New V3 environmental/conditions fields.
+  final _visibilityController = TextEditingController();
+  final _airTempController = TextEditingController();
+  final _surfaceTempController = TextEditingController();
+  final _bottomTempController = TextEditingController();
+
   final _notesController = TextEditingController();
+
+  // ---------------------------------------------------------------------------
+  // Dropdown state
+  //
+  // These hold the selected values from dropdown fields.
+  // ---------------------------------------------------------------------------
 
   String? _selectedTankType;
   double? _selectedTankSize = DiveConstants.defaultTankSize;
   String? _selectedGasMix = DiveConstants.defaultGasMix;
   String? _selectedActivityType;
+  String? _selectedExposureProtection;
 
   @override
   void dispose() {
+    // Always dispose controllers to avoid memory leaks.
     for (final c in [
       _locationController,
       _depthController,
@@ -47,18 +75,35 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
       _weightUsedController,
       _startPressureController,
       _endPressureController,
+      _visibilityController,
+      _airTempController,
+      _surfaceTempController,
+      _bottomTempController,
       _notesController,
     ]) {
       c.dispose();
     }
+
     super.dispose();
   }
 
-  // ---- Safe parsing helpers ----
+  // ---------------------------------------------------------------------------
+  // Safe parsing helpers
+  //
+  // These convert optional text fields into numbers.
+  // Empty values are stored as null in the database.
+  // ---------------------------------------------------------------------------
+
   int? _toInt(String v) => v.isEmpty ? null : int.tryParse(v);
   double? _toDouble(String v) => v.isEmpty ? null : double.tryParse(v);
 
-  // ---- Validators ----
+  // ---------------------------------------------------------------------------
+  // Validators
+  //
+  // Required fields must contain valid values.
+  // Optional fields can be blank, but must be valid if filled in.
+  // ---------------------------------------------------------------------------
+
   String? _requiredIntValidator(String? v) {
     if (v == null || v.isEmpty) return "Required";
     if (int.tryParse(v) == null) return "Enter a whole number";
@@ -76,6 +121,16 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
     if (double.tryParse(v) == null) return "Enter a number";
     return null;
   }
+
+  // ---------------------------------------------------------------------------
+  // Save logic
+  //
+  // This builds a Drift companion object and inserts it into the database.
+  //
+  // Future change point:
+  // Any new database field added to the Dives table should usually be added
+  // here so new dives save that field.
+  // ---------------------------------------------------------------------------
 
   Future<void> _saveDive() async {
     if (!_formKey.currentState!.validate()) return;
@@ -101,12 +156,17 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
 
       tankType: Value(_selectedTankType),
       tankSize: Value(_selectedTankSize),
-
       gasMix: Value(_selectedGasMix),
 
       weightUsed: Value(_toDouble(_weightUsedController.text)),
-
       activityType: Value(_selectedActivityType),
+
+      // New V3 fields.
+      exposureProtection: Value(_selectedExposureProtection),
+      visibilityFt: Value(_toInt(_visibilityController.text)),
+      airTempF: Value(_toInt(_airTempController.text)),
+      surfaceTempF: Value(_toInt(_surfaceTempController.text)),
+      bottomTempF: Value(_toInt(_bottomTempController.text)),
 
       startPressurePsi: Value(_toInt(_startPressureController.text)),
       endPressurePsi: Value(_toInt(_endPressureController.text)),
@@ -122,6 +182,10 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
     Navigator.pop(context, true);
   }
 
+  // ---------------------------------------------------------------------------
+  // Date picker
+  // ---------------------------------------------------------------------------
+
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -135,6 +199,29 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Reusable section label
+  //
+  // This keeps the form easier to read as more fields are added.
+  // ---------------------------------------------------------------------------
+
+  Widget _sectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 18, bottom: 6),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Screen layout
+  // ---------------------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -145,6 +232,8 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              _sectionLabel("Dive Info"),
+
               ListTile(
                 title: Text("Date: ${_date.toLocal()}".split(' ')[0]),
                 trailing: const Icon(Icons.calendar_today),
@@ -189,11 +278,16 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
                 decoration: const InputDecoration(labelText: "Time Out"),
               ),
 
+              _sectionLabel("Equipment"),
+
               DropdownButtonFormField<String>(
                 value: _selectedTankType,
                 items: DiveConstants.tankTypes
                     .map(
-                      (t) => DropdownMenuItem<String>(value: t, child: Text(t)),
+                      (t) => DropdownMenuItem<String>(
+                        value: t,
+                        child: Text(t),
+                      ),
                     )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedTankType = v),
@@ -218,7 +312,10 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
                 value: _selectedGasMix,
                 items: DiveConstants.gasMixes
                     .map(
-                      (g) => DropdownMenuItem<String>(value: g, child: Text(g)),
+                      (g) => DropdownMenuItem<String>(
+                        value: g,
+                        child: Text(g),
+                      ),
                     )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedGasMix = v),
@@ -226,12 +323,21 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
               ),
 
               DropdownButtonFormField<String>(
-                value: _selectedActivityType,
-                items: DiveConstants.activityTypes
-                    .map((a) => DropdownMenuItem(value: a, child: Text(a)))
+                value: _selectedExposureProtection,
+                items: DiveConstants.exposureProtectionTypes
+                    .map(
+                      (e) => DropdownMenuItem<String>(
+                        value: e,
+                        child: Text(e),
+                      ),
+                    )
                     .toList(),
-                onChanged: (v) => setState(() => _selectedActivityType = v),
-                decoration: const InputDecoration(labelText: "Activity Type"),
+                onChanged: (v) {
+                  setState(() => _selectedExposureProtection = v);
+                },
+                decoration: const InputDecoration(
+                  labelText: "Exposure Protection",
+                ),
               ),
 
               TextFormField(
@@ -240,6 +346,60 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
                 validator: _optionalDoubleValidator,
                 decoration: const InputDecoration(labelText: "Weight Used"),
               ),
+
+              _sectionLabel("Dive Conditions"),
+
+              DropdownButtonFormField<String>(
+                value: _selectedActivityType,
+                items: DiveConstants.activityTypes
+                    .map(
+                      (a) => DropdownMenuItem<String>(
+                        value: a,
+                        child: Text(a),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (v) => setState(() => _selectedActivityType = v),
+                decoration: const InputDecoration(labelText: "Activity Type"),
+              ),
+
+              TextFormField(
+                controller: _visibilityController,
+                keyboardType: TextInputType.number,
+                validator: _optionalIntValidator,
+                decoration: const InputDecoration(
+                  labelText: "Visibility (ft)",
+                ),
+              ),
+
+              TextFormField(
+                controller: _airTempController,
+                keyboardType: TextInputType.number,
+                validator: _optionalIntValidator,
+                decoration: const InputDecoration(
+                  labelText: "Air Temperature (°F)",
+                ),
+              ),
+
+              TextFormField(
+                controller: _surfaceTempController,
+                keyboardType: TextInputType.number,
+                validator: _optionalIntValidator,
+                decoration: const InputDecoration(
+                  labelText: "Surface Temperature (°F)",
+                ),
+              ),
+
+              TextFormField(
+                controller: _bottomTempController,
+                keyboardType: TextInputType.number,
+                validator: _optionalIntValidator,
+                decoration: const InputDecoration(
+                  labelText: "Bottom Temperature (°F)",
+                ),
+              ),
+
+              _sectionLabel("Pressure"),
 
               TextFormField(
                 controller: _startPressureController,
@@ -254,6 +414,8 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
                 validator: _optionalIntValidator,
                 decoration: const InputDecoration(labelText: "End Pressure"),
               ),
+
+              _sectionLabel("Notes"),
 
               TextFormField(
                 controller: _notesController,

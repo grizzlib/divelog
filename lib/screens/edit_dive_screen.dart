@@ -15,6 +15,17 @@ class EditDiveScreen extends StatefulWidget {
 class _EditDiveScreenState extends State<EditDiveScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  // ---------------------------------------------------------------------------
+  // Text field controllers
+  //
+  // These hold the current values for text fields on the Edit Dive form.
+  //
+  // Future change point:
+  // If a field becomes a dropdown later, remove its controller and replace it
+  // with a selected value variable, like tank size, gas mix, and exposure
+  // protection.
+  // ---------------------------------------------------------------------------
+
   late TextEditingController _locationController;
   late TextEditingController _depthController;
   late TextEditingController _bottomTimeController;
@@ -27,16 +38,37 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
 
   late TextEditingController _startPressureController;
   late TextEditingController _endPressureController;
+
+  // V3 environmental/conditions fields.
+  late TextEditingController _visibilityController;
+  late TextEditingController _airTempController;
+  late TextEditingController _surfaceTempController;
+  late TextEditingController _bottomTempController;
+
   late TextEditingController _notesController;
+
+  // ---------------------------------------------------------------------------
+  // Dropdown state
+  //
+  // These hold the selected values from dropdown fields.
+  // ---------------------------------------------------------------------------
 
   String? _selectedTankType;
   double? _selectedTankSize;
   String? _selectedGasMix;
   String? _selectedActivityType;
+  String? _selectedExposureProtection;
 
   @override
   void initState() {
     super.initState();
+
+    // -------------------------------------------------------------------------
+    // Load existing dive values into controllers
+    //
+    // When editing, each field starts with the saved value from the selected
+    // dive. Null values show as blank fields.
+    // -------------------------------------------------------------------------
 
     _locationController = TextEditingController(
       text: widget.dive.locationName ?? '',
@@ -70,10 +102,36 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
       text: widget.dive.endPressurePsi?.toString() ?? '',
     );
 
+    // V3 fields.
+    _visibilityController = TextEditingController(
+      text: widget.dive.visibilityFt?.toString() ?? '',
+    );
+
+    _airTempController = TextEditingController(
+      text: widget.dive.airTempF?.toString() ?? '',
+    );
+
+    _surfaceTempController = TextEditingController(
+      text: widget.dive.surfaceTempF?.toString() ?? '',
+    );
+
+    _bottomTempController = TextEditingController(
+      text: widget.dive.bottomTempF?.toString() ?? '',
+    );
+
     _notesController = TextEditingController(text: widget.dive.notes ?? '');
 
-    // Restore dropdown selections. If the stored value no longer exists in
-    // the current option list, fall back safely so the dropdown does not throw.
+    // -------------------------------------------------------------------------
+    // Restore dropdown selections
+    //
+    // These checks prevent Flutter dropdown errors if an older saved value does
+    // not exist in the current constants list.
+    //
+    // Future change point:
+    // If dropdown options are renamed in DiveConstants, these fallback checks
+    // help keep old dives editable.
+    // -------------------------------------------------------------------------
+
     _selectedTankType = DiveConstants.tankTypes.contains(widget.dive.tankType)
         ? widget.dive.tankType
         : null;
@@ -88,12 +146,18 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
 
     _selectedActivityType =
         DiveConstants.activityTypes.contains(widget.dive.activityType)
-        ? widget.dive.activityType
+            ? widget.dive.activityType
+            : null;
+
+    _selectedExposureProtection = DiveConstants.exposureProtectionTypes
+            .contains(widget.dive.exposureProtection)
+        ? widget.dive.exposureProtection
         : null;
   }
 
   @override
   void dispose() {
+    // Always dispose controllers to avoid memory leaks.
     for (final c in [
       _locationController,
       _depthController,
@@ -104,18 +168,35 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
       _weightUsedController,
       _startPressureController,
       _endPressureController,
+      _visibilityController,
+      _airTempController,
+      _surfaceTempController,
+      _bottomTempController,
       _notesController,
     ]) {
       c.dispose();
     }
+
     super.dispose();
   }
 
-  // ---- Safe parsing helpers ----
+  // ---------------------------------------------------------------------------
+  // Safe parsing helpers
+  //
+  // These convert optional text fields into numbers.
+  // Empty values are stored as null in the database.
+  // ---------------------------------------------------------------------------
+
   int? _toInt(String v) => v.isEmpty ? null : int.tryParse(v);
   double? _toDouble(String v) => v.isEmpty ? null : double.tryParse(v);
 
-  // ---- Validators ----
+  // ---------------------------------------------------------------------------
+  // Validators
+  //
+  // Required fields must contain valid values.
+  // Optional fields can be blank, but must be valid if filled in.
+  // ---------------------------------------------------------------------------
+
   String? _requiredIntValidator(String? v) {
     if (v == null || v.isEmpty) return "Required";
     if (int.tryParse(v) == null) return "Enter a whole number";
@@ -133,6 +214,16 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
     if (double.tryParse(v) == null) return "Enter a number";
     return null;
   }
+
+  // ---------------------------------------------------------------------------
+  // Save logic
+  //
+  // This updates the existing dive row in the database.
+  //
+  // Future change point:
+  // Any new database field added to the Dives table should usually be added
+  // here so edited dives can save that field.
+  // ---------------------------------------------------------------------------
 
   Future<void> saveChanges() async {
     if (!_formKey.currentState!.validate()) return;
@@ -160,12 +251,17 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
 
         tankType: Value(_selectedTankType),
         tankSize: Value(_selectedTankSize),
-
         gasMix: Value(_selectedGasMix),
 
         weightUsed: Value(_toDouble(_weightUsedController.text)),
-
         activityType: Value(_selectedActivityType),
+
+        // V3 fields.
+        exposureProtection: Value(_selectedExposureProtection),
+        visibilityFt: Value(_toInt(_visibilityController.text)),
+        airTempF: Value(_toInt(_airTempController.text)),
+        surfaceTempF: Value(_toInt(_surfaceTempController.text)),
+        bottomTempF: Value(_toInt(_bottomTempController.text)),
 
         startPressurePsi: Value(_toInt(_startPressureController.text)),
         endPressurePsi: Value(_toInt(_endPressureController.text)),
@@ -176,10 +272,32 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
       ),
     );
 
-    if (mounted) {
-      Navigator.pop(context, true);
-    }
+    if (!mounted) return;
+    Navigator.pop(context, true);
   }
+
+  // ---------------------------------------------------------------------------
+  // Reusable section label
+  //
+  // This keeps the long edit form easier to read.
+  // ---------------------------------------------------------------------------
+
+  Widget _sectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 18, bottom: 6),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Screen layout
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -191,6 +309,8 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              _sectionLabel("Dive Info"),
+
               TextFormField(
                 controller: _diveNumberController,
                 keyboardType: TextInputType.number,
@@ -229,11 +349,16 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
                 decoration: const InputDecoration(labelText: "Time Out"),
               ),
 
+              _sectionLabel("Equipment"),
+
               DropdownButtonFormField<String>(
                 value: _selectedTankType,
                 items: DiveConstants.tankTypes
                     .map(
-                      (t) => DropdownMenuItem<String>(value: t, child: Text(t)),
+                      (t) => DropdownMenuItem<String>(
+                        value: t,
+                        child: Text(t),
+                      ),
                     )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedTankType = v),
@@ -258,7 +383,10 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
                 value: _selectedGasMix,
                 items: DiveConstants.gasMixes
                     .map(
-                      (g) => DropdownMenuItem<String>(value: g, child: Text(g)),
+                      (g) => DropdownMenuItem<String>(
+                        value: g,
+                        child: Text(g),
+                      ),
                     )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedGasMix = v),
@@ -266,14 +394,21 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
               ),
 
               DropdownButtonFormField<String>(
-                value: _selectedActivityType,
-                items: DiveConstants.activityTypes
+                value: _selectedExposureProtection,
+                items: DiveConstants.exposureProtectionTypes
                     .map(
-                      (a) => DropdownMenuItem<String>(value: a, child: Text(a)),
+                      (e) => DropdownMenuItem<String>(
+                        value: e,
+                        child: Text(e),
+                      ),
                     )
                     .toList(),
-                onChanged: (v) => setState(() => _selectedActivityType = v),
-                decoration: const InputDecoration(labelText: "Activity Type"),
+                onChanged: (v) {
+                  setState(() => _selectedExposureProtection = v);
+                },
+                decoration: const InputDecoration(
+                  labelText: "Exposure Protection",
+                ),
               ),
 
               TextFormField(
@@ -282,6 +417,60 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
                 validator: _optionalDoubleValidator,
                 decoration: const InputDecoration(labelText: "Weight Used"),
               ),
+
+              _sectionLabel("Dive Conditions"),
+
+              DropdownButtonFormField<String>(
+                value: _selectedActivityType,
+                items: DiveConstants.activityTypes
+                    .map(
+                      (a) => DropdownMenuItem<String>(
+                        value: a,
+                        child: Text(a),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (v) => setState(() => _selectedActivityType = v),
+                decoration: const InputDecoration(labelText: "Activity Type"),
+              ),
+
+              TextFormField(
+                controller: _visibilityController,
+                keyboardType: TextInputType.number,
+                validator: _optionalIntValidator,
+                decoration: const InputDecoration(
+                  labelText: "Visibility (ft)",
+                ),
+              ),
+
+              TextFormField(
+                controller: _airTempController,
+                keyboardType: TextInputType.number,
+                validator: _optionalIntValidator,
+                decoration: const InputDecoration(
+                  labelText: "Air Temperature (°F)",
+                ),
+              ),
+
+              TextFormField(
+                controller: _surfaceTempController,
+                keyboardType: TextInputType.number,
+                validator: _optionalIntValidator,
+                decoration: const InputDecoration(
+                  labelText: "Surface Temperature (°F)",
+                ),
+              ),
+
+              TextFormField(
+                controller: _bottomTempController,
+                keyboardType: TextInputType.number,
+                validator: _optionalIntValidator,
+                decoration: const InputDecoration(
+                  labelText: "Bottom Temperature (°F)",
+                ),
+              ),
+
+              _sectionLabel("Pressure"),
 
               TextFormField(
                 controller: _startPressureController,
@@ -296,6 +485,8 @@ class _EditDiveScreenState extends State<EditDiveScreen> {
                 validator: _optionalIntValidator,
                 decoration: const InputDecoration(labelText: "End Pressure"),
               ),
+
+              _sectionLabel("Notes"),
 
               TextFormField(
                 controller: _notesController,
