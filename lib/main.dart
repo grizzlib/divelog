@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'screens/add_dive_screen.dart';
-import 'screens/dive_list_screen.dart';
 import 'screens/dashboard_screen.dart';
 
 /// App entry point.
@@ -31,85 +29,10 @@ class MyApp extends StatelessWidget {
       ),
 
       // First screen shown when the app opens.
-      home: const HomePage(),
-    );
-  }
-}
-
-/// Main menu screen.
-///
-/// This is the central navigation screen for the app.
-/// From here the user can:
-/// - Add a new dive
-/// - View the dive list
-/// - Open the Phase 2 dashboard
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dive Log'),
-      ),
-
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              /// Opens the Add Dive screen.
-              ElevatedButton(
-                child: const Text('Add Dive'),
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const AddDiveScreen(),
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 20),
-
-              /// Opens the list of saved dives.
-              ElevatedButton(
-                child: const Text('View Dives'),
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const DiveListScreen(),
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 20),
-
-              /// Opens the Phase 2 Dashboard screen.
-              ///
-              /// Future change point:
-              /// If we add more dashboard sections later, they should be added
-              /// inside dashboard_screen.dart, not here.
-              ElevatedButton(
-                child: const Text('Dashboard'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const DashboardScreen(),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
+      // Future change point:
+      // Dashboard navigation and dashboard sections should live inside
+      // dashboard_screen.dart so main.dart stays focused on app setup.
+      home: const DashboardScreen(),
     );
   }
 }

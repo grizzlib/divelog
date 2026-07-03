@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../db/app_database.dart';
+import 'add_dive_screen.dart';
+import 'dive_list_screen.dart';
 
 /// Dashboard screen for Phase 2.
 ///
@@ -11,7 +13,7 @@ import '../db/app_database.dart';
 /// - Deepest dive
 /// - Average depth
 /// - Average bottom time
-/// - Most recent dive
+/// - Recent dives
 ///
 /// Future change points:
 /// - Add SAC/RMV summaries here later.
@@ -74,9 +76,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int get deepestDive {
     if (dives.isEmpty) return 0;
 
-    return dives
-        .map((dive) => dive.maxDepthFt)
-        .reduce((a, b) => a > b ? a : b);
+    return dives.map((dive) => dive.maxDepthFt).reduce((a, b) => a > b ? a : b);
   }
 
   /// Calculates the average max depth across all dives.
@@ -98,20 +98,70 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return totalBottomTime / dives.length;
   }
 
-  /// Finds the most recent dive by date.
-  ///
-  /// Returns null when no dives exist.
+  /// Newest dives shown on the home dashboard.
   ///
   /// Future change point:
-  /// If we add time-of-day sorting later, this can be updated to compare both
-  /// date and timeIn.
-  Dive? get mostRecentDive {
-    if (dives.isEmpty) return null;
+  /// If the dashboard later supports filters or profiles, apply those before
+  /// taking the first few recent dives.
+  List<Dive> get recentDives {
+    final sorted = [...dives]..sort(_compareRecentDives);
+    return sorted.take(5).toList();
+  }
 
-    return dives.reduce(
-      (currentLatest, nextDive) =>
-          nextDive.date.isAfter(currentLatest.date) ? nextDive : currentLatest,
+  /// Sorts recent dives newest first.
+  ///
+  /// The database stores timeIn as free text, so this parser supports simple
+  /// common formats and falls back to date-only sorting when no usable time is
+  /// available.
+  int _compareRecentDives(Dive a, Dive b) {
+    final dateCompare = _recentSortDateTime(
+      b,
+    ).compareTo(_recentSortDateTime(a));
+    if (dateCompare != 0) return dateCompare;
+
+    return (b.diveNumber ?? -1).compareTo(a.diveNumber ?? -1);
+  }
+
+  /// Builds a sortable DateTime from the dive date and optional timeIn text.
+  DateTime _recentSortDateTime(Dive dive) {
+    final time = _parseTimeIn(dive.timeIn);
+
+    return DateTime(
+      dive.date.year,
+      dive.date.month,
+      dive.date.day,
+      time?.hour ?? 0,
+      time?.minute ?? 0,
     );
+  }
+
+  /// Parses common timeIn values like "9:30", "09:30", "9:30 AM", or "2 PM".
+  ///
+  /// Future change point:
+  /// If time entry becomes structured instead of free text, this helper can be
+  /// replaced with direct sorting on the saved time value.
+  TimeOfDay? _parseTimeIn(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+
+    final match = RegExp(
+      r'^(\d{1,2})(?::(\d{2}))?\s*([ap]m)?$',
+      caseSensitive: false,
+    ).firstMatch(value.trim());
+
+    if (match == null) return null;
+
+    var hour = int.tryParse(match.group(1)!);
+    final minute = int.tryParse(match.group(2) ?? '0');
+    final period = match.group(3)?.toLowerCase();
+
+    if (hour == null || minute == null || minute > 59) return null;
+    if (period == null && hour > 23) return null;
+    if (period != null && (hour < 1 || hour > 12)) return null;
+
+    if (period == 'pm' && hour != 12) hour += 12;
+    if (period == 'am' && hour == 12) hour = 0;
+
+    return TimeOfDay(hour: hour, minute: minute);
   }
 
   // ---------------------------------------------------------------------------
@@ -155,6 +205,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ---------------------------------------------------------------------------
+  // Navigation actions
+  // ---------------------------------------------------------------------------
+
+  /// Opens the Add Dive screen and refreshes stats if a dive was saved.
+  Future<void> openAddDive() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AddDiveScreen()),
+    );
+
+    if (result == true) {
+      await loadDashboard();
+    }
+  }
+
+  /// Opens the full dive list.
+  ///
+  /// The dashboard refreshes when the user returns, because edits or deletes can
+  /// happen from the list/detail flow.
+  Future<void> openDiveList() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const DiveListScreen()),
+    );
+
+    await loadDashboard();
+  }
+
+  // ---------------------------------------------------------------------------
   // Reusable dashboard widgets
   // ---------------------------------------------------------------------------
 
@@ -163,108 +242,100 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// Future change point:
   /// If we want icons, colors, larger cards, or a grid layout later, this is
   /// the main widget to update.
-  Widget statCard({
-    required String label,
-    required String value,
-  }) {
+  Widget statCard({required String label, required String value}) {
     return Card(
       child: ListTile(
         title: Text(label),
         trailing: Text(
           value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  /// Main dashboard navigation.
+  ///
+  /// Future change point:
+  /// Add filters, export actions, or profile switching near these buttons if
+  /// the dashboard grows.
+  Widget dashboardActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: openAddDive,
+            child: const Text("Add Dive"),
           ),
         ),
-      ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: openDiveList,
+            child: const Text("View Dives"),
+          ),
+        ),
+      ],
     );
   }
 
-  /// Card showing the most recent dive.
+  /// Recent dive list for the home dashboard.
   ///
-  /// This gives the dashboard a little more useful context than numbers alone.
-  Widget mostRecentDiveCard(Dive dive) {
+  /// Future change point:
+  /// This section is the natural place to add tap-to-open details, filters, or
+  /// richer summary fields later.
+  Widget recentDivesSection() {
+    if (recentDives.isEmpty) {
+      return const Card(
+        child: ListTile(
+          title: Text("Recent Dives"),
+          subtitle: Text("No dives logged yet"),
+        ),
+      );
+    }
+
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Most Recent Dive",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(
+              "Recent Dives",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+          for (final dive in recentDives)
+            ListTile(
+              title: Text(
+                dive.diveNumber == null
+                    ? displayText(dive.locationName)
+                    : "Dive #${dive.diveNumber} - ${displayText(dive.locationName)}",
+              ),
+              subtitle: Text(
+                "${formatDate(dive.date)} | ${dive.maxDepthFt} ft | ${dive.bottomTimeMin} min",
               ),
             ),
-
-            const SizedBox(height: 8),
-
-            Text("Date: ${formatDate(dive.date)}"),
-            Text("Location: ${displayText(dive.locationName)}"),
-            Text("Max Depth: ${dive.maxDepthFt} ft"),
-            Text("Bottom Time: ${dive.bottomTimeMin} min"),
-          ],
-        ),
+        ],
       ),
     );
   }
 
-  /// Empty dashboard message shown when no dives exist.
-  ///
-  /// This avoids showing a dashboard full of zeros when the database is empty.
-  Widget emptyDashboard() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(
-              Icons.scuba_diving,
-              size: 64,
-            ),
-            SizedBox(height: 16),
-            Text(
-              "No dives logged yet",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              "Add your first dive, then come back here to see your dashboard stats.",
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Main dashboard content shown when at least one dive exists.
-  Widget populatedDashboard() {
-    final latestDive = mostRecentDive;
-
+  /// Main dashboard content.
+  Widget dashboardContent() {
     return RefreshIndicator(
       onRefresh: loadDashboard,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          statCard(
-            label: "Total Dives",
-            value: totalDives.toString(),
-          ),
+          dashboardActions(),
+          const SizedBox(height: 12),
+          statCard(label: "Total Dives", value: totalDives.toString()),
           statCard(
             label: "Total Bottom Time",
             value: formatBottomTime(totalBottomTime),
           ),
-          statCard(
-            label: "Deepest Dive",
-            value: "$deepestDive ft",
-          ),
+          statCard(label: "Deepest Dive", value: "$deepestDive ft"),
           statCard(
             label: "Average Depth",
             value: "${averageDepth.toStringAsFixed(1)} ft",
@@ -276,7 +347,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           const SizedBox(height: 12),
 
-          if (latestDive != null) mostRecentDiveCard(latestDive),
+          recentDivesSection(),
         ],
       ),
     );
@@ -289,14 +360,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Dive Dashboard"),
+      appBar: AppBar(title: const Text("Dive Log")),
+      body: SafeArea(
+        top: false,
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : dashboardContent(),
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : dives.isEmpty
-              ? emptyDashboard()
-              : populatedDashboard(),
     );
   }
 }

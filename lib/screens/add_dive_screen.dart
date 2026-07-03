@@ -64,6 +64,12 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
   String? _selectedExposureProtection;
 
   @override
+  void initState() {
+    super.initState();
+    _prefillDiveNumber();
+  }
+
+  @override
   void dispose() {
     // Always dispose controllers to avoid memory leaks.
     for (final c in [
@@ -101,6 +107,38 @@ class _AddDiveScreenState extends State<AddDiveScreen> {
   /// Keeps saved form dates as calendar dates without a time-of-day component.
   static DateTime _dateOnly(DateTime date) {
     return DateTime(date.year, date.month, date.day);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Dive number suggestion
+  // ---------------------------------------------------------------------------
+
+  /// Suggests the next dive number without changing any existing dives.
+  ///
+  /// Future change point:
+  /// If dive numbering later becomes profile-specific or trip-specific, this is
+  /// where that filtering should be added before finding the highest number.
+  Future<void> _prefillDiveNumber() async {
+    final existingDives = await db.getAllDives();
+
+    int? highestDiveNumber;
+
+    for (final dive in existingDives) {
+      final diveNumber = dive.diveNumber;
+      if (diveNumber == null) continue;
+
+      if (highestDiveNumber == null || diveNumber > highestDiveNumber) {
+        highestDiveNumber = diveNumber;
+      }
+    }
+
+    if (!mounted || _diveNumberController.text.isNotEmpty) return;
+
+    final suggestedDiveNumber = ((highestDiveNumber ?? 0) + 1).toString();
+    _diveNumberController.value = TextEditingValue(
+      text: suggestedDiveNumber,
+      selection: TextSelection.collapsed(offset: suggestedDiveNumber.length),
+    );
   }
 
   // ---------------------------------------------------------------------------
