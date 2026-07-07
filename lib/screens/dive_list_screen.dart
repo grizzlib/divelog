@@ -19,7 +19,9 @@ class DiveListScreen extends StatefulWidget {
 }
 
 class _DiveListScreenState extends State<DiveListScreen> {
+  List<Dive> _allDives = [];
   List<Dive> dives = [];
+  final _searchController = TextEditingController();
   DiveListSortOption _sortOption = DiveListSortOption.newestFirst;
 
   @override
@@ -30,12 +32,18 @@ class _DiveListScreenState extends State<DiveListScreen> {
 
   Future<void> loadDives() async {
     final results = await db.getAllDives();
-    _sortDives(results);
 
     if (!mounted) return;
     setState(() {
-      dives = results;
+      _allDives = results;
+      _refreshVisibleDives();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _openDive(Dive dive) async {
@@ -51,20 +59,57 @@ class _DiveListScreenState extends State<DiveListScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Sorting
+  // Search and sorting
   //
   // Future change point:
-  // Add search and filter state near _sortOption, then apply search/filter/sort
-  // together before displaying the list.
+  // Add structured filters, such as date range, gas mix, or activity type,
+  // beside the search text here. Apply those filters before sorting the list.
   // ---------------------------------------------------------------------------
+
+  void _changeSearch(String value) {
+    setState(_refreshVisibleDives);
+  }
 
   void _changeSort(DiveListSortOption? option) {
     if (option == null) return;
 
     setState(() {
       _sortOption = option;
-      _sortDives(dives);
+      _refreshVisibleDives();
     });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    setState(_refreshVisibleDives);
+  }
+
+  void _refreshVisibleDives() {
+    dives = _filteredDives();
+    _sortDives(dives);
+  }
+
+  List<Dive> _filteredDives() {
+    final query = _searchController.text.trim().toLowerCase();
+    if (query.isEmpty) return [..._allDives];
+
+    return _allDives.where((dive) => _matchesSearch(dive, query)).toList();
+  }
+
+  bool _matchesSearch(Dive dive, String query) {
+    final searchableValues = [
+      dive.locationName,
+      dive.notes,
+      dive.activityType,
+      dive.gasMix,
+      dive.tankType,
+      dive.tankSize?.toString(),
+      dive.diveNumber?.toString(),
+    ];
+
+    return searchableValues.any(
+      (value) => value != null && value.toLowerCase().contains(query),
+    );
   }
 
   void _sortDives(List<Dive> diveList) {
@@ -215,9 +260,29 @@ class _DiveListScreenState extends State<DiveListScreen> {
   // Screen widgets
   // ---------------------------------------------------------------------------
 
+  Widget _searchControl() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          labelText: "Search dives",
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: _searchController.text.isEmpty
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: _clearSearch,
+                ),
+        ),
+        onChanged: _changeSearch,
+      ),
+    );
+  }
+
   Widget _sortControl() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Row(
         children: [
           const Text("Sort by"),
@@ -264,12 +329,17 @@ class _DiveListScreenState extends State<DiveListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Dive Log')),
-      body: dives.isEmpty
+      body: _allDives.isEmpty
           ? const Center(child: Text('No dives logged yet'))
           : Column(
               children: [
+                _searchControl(),
                 _sortControl(),
-                Expanded(child: _diveList()),
+                Expanded(
+                  child: dives.isEmpty
+                      ? const Center(child: Text('No dives match your search'))
+                      : _diveList(),
+                ),
               ],
             ),
     );
