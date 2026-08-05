@@ -22,10 +22,14 @@ class _DiveListScreenState extends State<DiveListScreen> {
   List<Dive> _allDives = [];
   List<Dive> dives = [];
   final _searchController = TextEditingController();
+  final _minimumDepthController = TextEditingController();
+  final _maximumDepthController = TextEditingController();
   DiveListSortOption _sortOption = DiveListSortOption.newestFirst;
   String? _activityTypeFilter;
   String? _gasMixFilter;
   String? _tankTypeFilter;
+  DateTime? _startDateFilter;
+  DateTime? _endDateFilter;
 
   @override
   void initState() {
@@ -58,6 +62,8 @@ class _DiveListScreenState extends State<DiveListScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _minimumDepthController.dispose();
+    _maximumDepthController.dispose();
     super.dispose();
   }
 
@@ -76,9 +82,8 @@ class _DiveListScreenState extends State<DiveListScreen> {
   // ---------------------------------------------------------------------------
   // Search, filters, and sorting
   //
-  // Future change point:
-  // Date range and depth range filters can join these predicates later. CSV
-  // export can use the final `dives` list so it respects search/filter/sort.
+  // Future CSV export can use the final `dives` list so exported rows respect
+  // the same search, filter, and sort choices shown on screen.
   // ---------------------------------------------------------------------------
 
   void _changeSearch(String value) {
@@ -129,6 +134,79 @@ class _DiveListScreenState extends State<DiveListScreen> {
     });
   }
 
+  void _changeRangeFilter(String value) {
+    setState(_refreshVisibleDives);
+  }
+
+  void _clearRangeFilters() {
+    _minimumDepthController.clear();
+    _maximumDepthController.clear();
+    setState(() {
+      _startDateFilter = null;
+      _endDateFilter = null;
+      _refreshVisibleDives();
+    });
+  }
+
+  Future<void> _selectDateFilter({required bool isStartDate}) async {
+    final currentValue = isStartDate ? _startDateFilter : _endDateFilter;
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: currentValue ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+    );
+
+    if (selectedDate == null || !mounted) return;
+
+    setState(() {
+      if (isStartDate) {
+        _startDateFilter = DateUtils.dateOnly(selectedDate);
+      } else {
+        _endDateFilter = DateUtils.dateOnly(selectedDate);
+      }
+      _refreshVisibleDives();
+    });
+  }
+
+  void _clearDateFilter({required bool isStartDate}) {
+    setState(() {
+      if (isStartDate) {
+        _startDateFilter = null;
+      } else {
+        _endDateFilter = null;
+      }
+      _refreshVisibleDives();
+    });
+  }
+
+  String? _dateRangeError() {
+    if (_startDateFilter != null &&
+        _endDateFilter != null &&
+        _startDateFilter!.isAfter(_endDateFilter!)) {
+      return "Start date is after end date.";
+    }
+    return null;
+  }
+
+  String? _depthRangeError() {
+    final minimumText = _minimumDepthController.text.trim();
+    final maximumText = _maximumDepthController.text.trim();
+    final minimumDepth = _parseDepth(minimumText);
+    final maximumDepth = _parseDepth(maximumText);
+
+    if ((minimumText.isNotEmpty && minimumDepth == null) ||
+        (maximumText.isNotEmpty && maximumDepth == null)) {
+      return "Depth must be a valid number.";
+    }
+    if (minimumDepth != null &&
+        maximumDepth != null &&
+        minimumDepth > maximumDepth) {
+      return "Minimum depth is greater than maximum depth.";
+    }
+    return null;
+  }
+
   void _refreshVisibleDives() {
     dives = _filteredDives();
     _sortDives(dives);
@@ -136,6 +214,8 @@ class _DiveListScreenState extends State<DiveListScreen> {
 
   List<Dive> _filteredDives() {
     final query = _searchController.text.trim().toLowerCase();
+    final minimumDepth = _parseDepth(_minimumDepthController.text);
+    final maximumDepth = _parseDepth(_maximumDepthController.text);
 
     return _allDives.where((dive) {
       final matchesQuery = query.isEmpty || _matchesSearch(dive, query);
@@ -145,9 +225,31 @@ class _DiveListScreenState extends State<DiveListScreen> {
       final matchesGas = _gasMixFilter == null || dive.gasMix == _gasMixFilter;
       final matchesTank =
           _tankTypeFilter == null || dive.tankType == _tankTypeFilter;
+      final diveDateTime = _sortDateTime(dive);
+      final matchesStartDate =
+          _startDateFilter == null || !diveDateTime.isBefore(_startDateFilter!);
+      final endDateExclusive = _endDateFilter?.add(const Duration(days: 1));
+      final matchesEndDate =
+          endDateExclusive == null || diveDateTime.isBefore(endDateExclusive);
+      final matchesMinimumDepth =
+          minimumDepth == null || dive.maxDepthFt >= minimumDepth;
+      final matchesMaximumDepth =
+          maximumDepth == null || dive.maxDepthFt <= maximumDepth;
 
-      return matchesQuery && matchesActivity && matchesGas && matchesTank;
+      return matchesQuery &&
+          matchesActivity &&
+          matchesGas &&
+          matchesTank &&
+          matchesStartDate &&
+          matchesEndDate &&
+          matchesMinimumDepth &&
+          matchesMaximumDepth;
     }).toList();
+  }
+
+  double? _parseDepth(String value) {
+    final depth = double.tryParse(value.trim());
+    return depth != null && depth.isFinite ? depth : null;
   }
 
   List<String> _filterOptions(String? Function(Dive) valueForDive) {
@@ -376,6 +478,128 @@ class _DiveListScreenState extends State<DiveListScreen> {
     );
   }
 
+  Widget _rangeFilterControl() {
+    final dateError = _dateRangeError();
+    final depthError = _depthRangeError();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Date range"),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              _dateFilterButton(
+                label: "Start date",
+                value: _startDateFilter,
+                isStartDate: true,
+              ),
+              _dateFilterButton(
+                label: "End date",
+                value: _endDateFilter,
+                isStartDate: false,
+              ),
+            ],
+          ),
+          if (dateError != null) _rangeErrorText(dateError),
+          const SizedBox(height: 8),
+          const Text("Depth range (ft)"),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _minimumDepthController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: "Minimum depth",
+                    isDense: true,
+                  ),
+                  onChanged: _changeRangeFilter,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _maximumDepthController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: "Maximum depth",
+                    isDense: true,
+                  ),
+                  onChanged: _changeRangeFilter,
+                ),
+              ),
+            ],
+          ),
+          if (depthError != null) _rangeErrorText(depthError),
+          if (_hasRangeFilters())
+            TextButton.icon(
+              onPressed: _clearRangeFilters,
+              icon: const Icon(Icons.restart_alt),
+              label: const Text("Clear ranges"),
+            ),
+        ],
+      ),
+    );
+  }
+
+  bool _hasRangeFilters() {
+    return _startDateFilter != null ||
+        _endDateFilter != null ||
+        _minimumDepthController.text.trim().isNotEmpty ||
+        _maximumDepthController.text.trim().isNotEmpty;
+  }
+
+  Widget _rangeErrorText(String message) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(
+        message,
+        style: TextStyle(color: Theme.of(context).colorScheme.error),
+      ),
+    );
+  }
+
+  Widget _dateFilterButton({
+    required String label,
+    required DateTime? value,
+    required bool isStartDate,
+  }) {
+    final displayValue = value == null
+        ? label
+        : '${value.month}/${value.day}/${value.year}';
+
+    return SizedBox(
+      width: 220,
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => _selectDateFilter(isStartDate: isStartDate),
+              icon: const Icon(Icons.calendar_today),
+              label: Text(displayValue),
+            ),
+          ),
+          if (value != null)
+            IconButton(
+              tooltip: "Clear $label",
+              onPressed: () => _clearDateFilter(isStartDate: isStartDate),
+              icon: const Icon(Icons.clear),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _filterControl() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
@@ -485,6 +709,7 @@ class _DiveListScreenState extends State<DiveListScreen> {
               children: [
                 _searchControl(),
                 _filterControl(),
+                _rangeFilterControl(),
                 _sortControl(),
                 Expanded(
                   child: dives.isEmpty
