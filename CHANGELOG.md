@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.4 - 2026-08-05
+
+- Added date range filters to the Dive List screen.
+- Added depth range filters to the Dive List screen.
+- Date and depth filters work with existing search, sort, and structured filters.
+
 ## 1.0.3 - 2026-08-05
 
 - Added structured filters to the Dive List screen.
