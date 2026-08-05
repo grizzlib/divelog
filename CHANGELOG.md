@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3 - 2026-08-05
+
+- Added structured filters to the Dive List screen.
+- Added filters for activity type, gas mix, and tank type.
+- Filters work with the existing search and sort options.
+
 ## 1.0.2 - 2026-07-03
 
 - Added sort options to the Dive List screen.
