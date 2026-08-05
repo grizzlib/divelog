@@ -23,6 +23,9 @@ class _DiveListScreenState extends State<DiveListScreen> {
   List<Dive> dives = [];
   final _searchController = TextEditingController();
   DiveListSortOption _sortOption = DiveListSortOption.newestFirst;
+  String? _activityTypeFilter;
+  String? _gasMixFilter;
+  String? _tankTypeFilter;
 
   @override
   void initState() {
@@ -36,6 +39,18 @@ class _DiveListScreenState extends State<DiveListScreen> {
     if (!mounted) return;
     setState(() {
       _allDives = results;
+      _activityTypeFilter = _validFilter(
+        _activityTypeFilter,
+        _filterOptions((dive) => dive.activityType),
+      );
+      _gasMixFilter = _validFilter(
+        _gasMixFilter,
+        _filterOptions((dive) => dive.gasMix),
+      );
+      _tankTypeFilter = _validFilter(
+        _tankTypeFilter,
+        _filterOptions((dive) => dive.tankType),
+      );
       _refreshVisibleDives();
     });
   }
@@ -59,11 +74,11 @@ class _DiveListScreenState extends State<DiveListScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Search and sorting
+  // Search, filters, and sorting
   //
   // Future change point:
-  // Add structured filters, such as date range, gas mix, or activity type,
-  // beside the search text here. Apply those filters before sorting the list.
+  // Date range and depth range filters can join these predicates later. CSV
+  // export can use the final `dives` list so it respects search/filter/sort.
   // ---------------------------------------------------------------------------
 
   void _changeSearch(String value) {
@@ -84,6 +99,36 @@ class _DiveListScreenState extends State<DiveListScreen> {
     setState(_refreshVisibleDives);
   }
 
+  void _setActivityTypeFilter(String? value) {
+    setState(() {
+      _activityTypeFilter = value;
+      _refreshVisibleDives();
+    });
+  }
+
+  void _setGasMixFilter(String? value) {
+    setState(() {
+      _gasMixFilter = value;
+      _refreshVisibleDives();
+    });
+  }
+
+  void _setTankTypeFilter(String? value) {
+    setState(() {
+      _tankTypeFilter = value;
+      _refreshVisibleDives();
+    });
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _activityTypeFilter = null;
+      _gasMixFilter = null;
+      _tankTypeFilter = null;
+      _refreshVisibleDives();
+    });
+  }
+
   void _refreshVisibleDives() {
     dives = _filteredDives();
     _sortDives(dives);
@@ -91,9 +136,33 @@ class _DiveListScreenState extends State<DiveListScreen> {
 
   List<Dive> _filteredDives() {
     final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) return [..._allDives];
 
-    return _allDives.where((dive) => _matchesSearch(dive, query)).toList();
+    return _allDives.where((dive) {
+      final matchesQuery = query.isEmpty || _matchesSearch(dive, query);
+      final matchesActivity =
+          _activityTypeFilter == null ||
+          dive.activityType == _activityTypeFilter;
+      final matchesGas = _gasMixFilter == null || dive.gasMix == _gasMixFilter;
+      final matchesTank =
+          _tankTypeFilter == null || dive.tankType == _tankTypeFilter;
+
+      return matchesQuery && matchesActivity && matchesGas && matchesTank;
+    }).toList();
+  }
+
+  List<String> _filterOptions(String? Function(Dive) valueForDive) {
+    final values = _allDives
+        .map(valueForDive)
+        .whereType<String>()
+        .where((value) => value.trim().isNotEmpty)
+        .toSet()
+        .toList();
+    values.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return values;
+  }
+
+  String? _validFilter(String? filter, List<String> options) {
+    return options.contains(filter) ? filter : null;
   }
 
   bool _matchesSearch(Dive dive, String query) {
@@ -307,6 +376,87 @@ class _DiveListScreenState extends State<DiveListScreen> {
     );
   }
 
+  Widget _filterControl() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _activityFilterDropdown(),
+          _gasMixFilterDropdown(),
+          _tankTypeFilterDropdown(),
+          if (_hasFilters())
+            TextButton.icon(
+              onPressed: _clearFilters,
+              icon: const Icon(Icons.filter_alt_off),
+              label: const Text("Clear filters"),
+            ),
+        ],
+      ),
+    );
+  }
+
+  bool _hasFilters() {
+    return [
+      _activityTypeFilter,
+      _gasMixFilter,
+      _tankTypeFilter,
+    ].any((value) => value != null);
+  }
+
+  Widget _activityFilterDropdown() {
+    return _filterDropdown(
+      label: "Activity",
+      value: _activityTypeFilter,
+      options: _filterOptions((dive) => dive.activityType),
+      onChanged: _setActivityTypeFilter,
+    );
+  }
+
+  Widget _gasMixFilterDropdown() {
+    return _filterDropdown(
+      label: "Gas mix",
+      value: _gasMixFilter,
+      options: _filterOptions((dive) => dive.gasMix),
+      onChanged: _setGasMixFilter,
+    );
+  }
+
+  Widget _tankTypeFilterDropdown() {
+    return _filterDropdown(
+      label: "Tank type",
+      value: _tankTypeFilter,
+      options: _filterOptions((dive) => dive.tankType),
+      onChanged: _setTankTypeFilter,
+    );
+  }
+
+  Widget _filterDropdown({
+    required String label,
+    required String? value,
+    required List<String> options,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return SizedBox(
+      width: 180,
+      child: DropdownButtonFormField<String?>(
+        key: ValueKey('$label:$value'),
+        initialValue: value,
+        decoration: InputDecoration(labelText: label, isDense: true),
+        items: [
+          const DropdownMenuItem<String?>(value: null, child: Text('All')),
+          ...options.map(
+            (option) => DropdownMenuItem<String?>(
+              value: option,
+              child: Text(option, overflow: TextOverflow.ellipsis),
+            ),
+          ),
+        ],
+        onChanged: onChanged,
+      ),
+    );
+  }
+
   Widget _diveList() {
     return ListView.builder(
       itemCount: dives.length,
@@ -334,10 +484,13 @@ class _DiveListScreenState extends State<DiveListScreen> {
           : Column(
               children: [
                 _searchControl(),
+                _filterControl(),
                 _sortControl(),
                 Expanded(
                   child: dives.isEmpty
-                      ? const Center(child: Text('No dives match your search'))
+                      ? const Center(
+                          child: Text('No dives match your search and filters'),
+                        )
                       : _diveList(),
                 ),
               ],
