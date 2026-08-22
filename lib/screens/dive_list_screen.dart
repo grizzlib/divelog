@@ -1,4 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+
 import '../db/app_database.dart';
 import 'dive_detail_screen.dart';
 
@@ -30,6 +35,7 @@ class _DiveListScreenState extends State<DiveListScreen> {
   String? _tankTypeFilter;
   DateTime? _startDateFilter;
   DateTime? _endDateFilter;
+  bool _isExporting = false;
 
   @override
   void initState() {
@@ -82,8 +88,8 @@ class _DiveListScreenState extends State<DiveListScreen> {
   // ---------------------------------------------------------------------------
   // Search, filters, and sorting
   //
-  // Future CSV export can use the final `dives` list so exported rows respect
-  // the same search, filter, and sort choices shown on screen.
+  // CSV export uses the final `dives` list so exported rows respect the same
+  // search, filter, and sort choices shown on screen.
   // ---------------------------------------------------------------------------
 
   void _changeSearch(String value) {
@@ -428,6 +434,115 @@ class _DiveListScreenState extends State<DiveListScreen> {
   }
 
   // ---------------------------------------------------------------------------
+  // CSV export
+  // ---------------------------------------------------------------------------
+
+  Future<void> _exportVisibleDives() async {
+    // Copy the visible list so the exported rows stay consistent even if the
+    // screen's filters change while the file is being written.
+    final divesToExport = List<Dive>.of(dives);
+    if (divesToExport.isEmpty || _isExporting) return;
+
+    setState(() => _isExporting = true);
+
+    try {
+      final fileName = 'dive_log_export_${_fileTimestamp(DateTime.now())}.csv';
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File(p.join(directory.path, fileName));
+      await file.writeAsString(_buildCsv(divesToExport), flush: true);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              'Exported ${divesToExport.length} dives to ${file.path}',
+            ),
+          ),
+        );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(content: Text('Could not export dives: $error')),
+        );
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
+    }
+  }
+
+  String _buildCsv(List<Dive> divesToExport) {
+    const headers = [
+      'diveNumber',
+      'date',
+      'timeIn',
+      'timeOut',
+      'locationName',
+      'maxDepthFt',
+      'bottomTimeMin',
+      'startPressurePsi',
+      'endPressurePsi',
+      'tankType',
+      'tankSize',
+      'gasMix',
+      'weightUsed',
+      'activityType',
+      'notes',
+    ];
+    final csv = StringBuffer()..writeln(headers.join(','));
+
+    for (final dive in divesToExport) {
+      final values = [
+        dive.diveNumber,
+        _csvDate(dive.date),
+        dive.timeIn,
+        dive.timeOut,
+        dive.locationName,
+        dive.maxDepthFt,
+        dive.bottomTimeMin,
+        dive.startPressurePsi,
+        dive.endPressurePsi,
+        dive.tankType,
+        dive.tankSize,
+        dive.gasMix,
+        dive.weightUsed,
+        dive.activityType,
+        dive.notes,
+      ];
+      csv.writeln(values.map(_escapeCsvValue).join(','));
+    }
+
+    return csv.toString();
+  }
+
+  String _escapeCsvValue(Object? value) {
+    if (value == null) return '';
+
+    final text = value.toString();
+    if (!text.contains(RegExp('[,"\\r\\n]'))) return text;
+
+    return '"${text.replaceAll('"', '""')}"';
+  }
+
+  String _csvDate(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
+  }
+
+  String _fileTimestamp(DateTime dateTime) {
+    final month = dateTime.month.toString().padLeft(2, '0');
+    final day = dateTime.day.toString().padLeft(2, '0');
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    return '${dateTime.year}-$month-${day}_$hour-$minute';
+  }
+
+  // ---------------------------------------------------------------------------
   // Screen widgets
   // ---------------------------------------------------------------------------
 
@@ -702,7 +817,23 @@ class _DiveListScreenState extends State<DiveListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Dive Log')),
+      appBar: AppBar(
+        title: const Text('Dive Log'),
+        actions: [
+          IconButton(
+            tooltip: 'Export displayed dives to CSV',
+            onPressed: _isExporting || dives.isEmpty
+                ? null
+                : _exportVisibleDives,
+            icon: _isExporting
+                ? const SizedBox.square(
+                    dimension: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.download),
+          ),
+        ],
+      ),
       body: _allDives.isEmpty
           ? const Center(child: Text('No dives logged yet'))
           : Column(
