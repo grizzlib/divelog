@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.5 - 2026-08-22
+
+- Added CSV export for the currently displayed Dive List.
+- CSV export respects active search, sort, and filters.
+- CSV export saves to the app documents directory.
+- Export success message shows the saved file path.
+
 ## 1.0.4 - 2026-08-05
 
 - Added date range filters to the Dive List screen.
